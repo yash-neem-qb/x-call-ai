@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from '@angular/material/icon';
@@ -51,7 +52,8 @@ export class KnowledgeBaseComponent implements OnInit, OnDestroy {
   constructor(
     private knowledgeBaseService: KnowledgeBaseService,
     private assistantService: AssistantService,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -366,5 +368,12 @@ export class KnowledgeBaseComponent implements OnInit, OnDestroy {
       default:
         return 'Unknown';
     }
+  }
+
+  /**
+   * Navigate to assistants page to create a new assistant
+   */
+  createAssistant(): void {
+    this.router.navigate(['/assistants']);
   }
 }

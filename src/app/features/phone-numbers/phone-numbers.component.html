@@ -19,6 +19,12 @@
       >
     </div>
     
+    <!-- Instructional text when no phone number is selected -->
+    <div class="instruction-text" *ngIf="!isLoading && phoneNumbers && phoneNumbers.length > 0 && !selectedPhoneNumber">
+      <h3>Select a phone number to configure</h3>
+      <p>Choose a phone number from the list or create a new one to get started.</p>
+    </div>
+    
     <div class="phone-list" *ngIf="!isLoading && phoneNumbers && phoneNumbers.length > 0">
       <div 
         class="phone-item" 
@@ -39,7 +45,6 @@
       <h2>No phone numbers found</h2>
       <p *ngIf="searchQuery">Try adjusting your search query</p>
       <p *ngIf="!searchQuery">Purchase your first phone number to get started</p>
-      <button mat-flat-button color="primary" (click)="createPhoneNumber()">Create Phone Number</button>
     </div>
     
     <!-- Loading state -->

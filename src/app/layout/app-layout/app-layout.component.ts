@@ -102,7 +102,11 @@ export class AppLayoutComponent implements OnInit {
       return this.currentOrganization.organization_name;
     }
     const user = this.authService.getCurrentUser();
-    return user?.organization_name || 'My Organization';
+    if (!user?.organization_name) {
+      console.error('No organization name found');
+      return 'No Organization';
+    }
+    return user.organization_name;
   }
 
   /**
@@ -110,7 +114,11 @@ export class AppLayoutComponent implements OnInit {
    */
   getUserEmail(): string {
     const user = this.authService.getCurrentUser();
-    return user?.email || 'user@example.com';
+    if (!user?.email) {
+      console.error('No user email found');
+      return 'No Email';
+    }
+    return user.email;
   }
 
   /**
@@ -118,8 +126,11 @@ export class AppLayoutComponent implements OnInit {
    */
   getUserInitial(): string {
     const user = this.authService.getCurrentUser();
-    const email = user?.email || 'user@example.com';
-    return email.charAt(0).toUpperCase();
+    if (!user?.email) {
+      console.error('No user email found');
+      return '?';
+    }
+    return user.email.charAt(0).toUpperCase();
   }
 
   /**

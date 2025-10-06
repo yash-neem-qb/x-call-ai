@@ -13,6 +13,7 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 
 import { PhoneService, PhoneNumber, ApiPhoneNumber, PhoneNumberUpdate } from '../../core/services/phone.service';
 import { AssistantService, Assistant } from '../../core/services/assistant.service';
+import { AuthService } from '../../core/services/auth.service';
 import { ImportTwilioDialogComponent } from './import-twilio-dialog/import-twilio-dialog.component';
 
 @Component({
@@ -51,6 +52,7 @@ export class PhoneNumbersComponent implements OnInit, OnDestroy {
   constructor(
     private phoneService: PhoneService,
     private assistantService: AssistantService,
+    private authService: AuthService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
@@ -88,10 +90,10 @@ export class PhoneNumbersComponent implements OnInit, OnDestroy {
                 id: phone.id,
                 phone_number: phone.phone_number,
                 friendly_name: phone.friendly_name,
-                country: 'US', // Default since API doesn't provide it
-                region: '', // Default since API doesn't provide it
+                country: '',
+                region: '',
                 capabilities: {
-                  voice: true, // Default since API doesn't provide it
+                  voice: false,
                   sms: false,
                   mms: false
                 },
@@ -112,9 +114,7 @@ export class PhoneNumbersComponent implements OnInit, OnDestroy {
           } else {
             console.warn('No phone numbers in response');
             this.phoneNumbers = [];
-            
-            // For development - add mock data if no phone numbers are returned
-            this.addMockPhoneNumbers();
+            this.handleNoPhoneNumbers();
           }
           
           this.isLoading = false;
@@ -123,78 +123,18 @@ export class PhoneNumbersComponent implements OnInit, OnDestroy {
           console.error('Error loading phone numbers:', err);
           this.error = 'Failed to load phone numbers. Please try again.';
           this.isLoading = false;
-          
-          // For development - add mock data on error
-          this.addMockPhoneNumbers();
-          
-          // Auto-select the first phone number if available
-          if (this.phoneNumbers.length > 0) {
-            this.selectPhoneNumber(this.phoneNumbers[0]);
-          }
+          this.phoneNumbers = [];
+          this.handleNoPhoneNumbers();
         }
       });
   }
   
   /**
-   * Add mock phone numbers for development
+   * No mock data - show error if no phone numbers are loaded
    */
-  private addMockPhoneNumbers(): void {
-    console.log('Adding mock phone numbers for development');
-    
-    this.phoneNumbers = [
-      {
-        id: '1',
-        phone_number: '+15551234001',
-        friendly_name: 'Sales Line',
-        country: 'US',
-        region: 'California',
-        capabilities: {
-          voice: true,
-          sms: true,
-          mms: false
-        },
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        organization_id: 'org-123',
-        assistant_id: 'asst-123',
-        assistant_name: 'Sales Assistant'
-      },
-      {
-        id: '2',
-        phone_number: '+15551234002',
-        friendly_name: 'Support Line',
-        country: 'US',
-        region: 'New York',
-        capabilities: {
-          voice: true,
-          sms: false,
-          mms: false
-        },
-        status: 'active',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        organization_id: 'org-123'
-      },
-      {
-        id: '3',
-        phone_number: '+15551234003',
-        friendly_name: 'Marketing Line',
-        country: 'US',
-        region: 'Texas',
-        capabilities: {
-          voice: true,
-          sms: true,
-          mms: true
-        },
-        status: 'pending',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        organization_id: 'org-123',
-        assistant_id: 'asst-456',
-        assistant_name: 'Marketing Assistant'
-      }
-    ];
+  private handleNoPhoneNumbers(): void {
+    console.log('No phone numbers available');
+    this.snackBar.open('No phone numbers found. Please add phone numbers to your account.', 'Close', { duration: 5000 });
   }
   
   /**
@@ -273,10 +213,10 @@ export class PhoneNumbersComponent implements OnInit, OnDestroy {
             id: updatedPhoneNumber.id,
             phone_number: updatedPhoneNumber.phone_number,
             friendly_name: updatedPhoneNumber.friendly_name,
-            country: 'US', // Default since API doesn't provide it
-            region: '', // Default since API doesn't provide it
+            country: '',
+            region: '',
             capabilities: {
-              voice: true, // Default since API doesn't provide it
+              voice: false,
               sms: false,
               mms: false
             },

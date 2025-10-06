@@ -192,7 +192,11 @@ export class SettingsComponent implements OnInit {
    */
   getOrganizationDisplayName(): string {
     const user = this.authService.getCurrentUser();
-    return user?.organization_name || 'My Organization';
+    if (!user?.organization_name) {
+      console.error('No organization name found');
+      return 'No Organization';
+    }
+    return user.organization_name;
   }
 
   /**
@@ -200,7 +204,11 @@ export class SettingsComponent implements OnInit {
    */
   getUserEmail(): string {
     const user = this.authService.getCurrentUser();
-    return user?.email || 'user@example.com';
+    if (!user?.email) {
+      console.error('No user email found');
+      return 'No Email';
+    }
+    return user.email;
   }
 
   /**
@@ -231,18 +239,8 @@ export class SettingsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading members:', error);
         this.isLoadingMembers = false;
-        // Fallback to mock data for now
-        this.members = [
-          {
-            id: '1',
-            email: 'ashishmishra8120@gmail.com',
-            name: '',
-            role: 'Admin',
-            status: 'Active',
-            joinedAt: '2024-01-15T10:30:00Z',
-            lastActiveAt: '2024-01-20T14:22:00Z'
-          }
-        ];
+        this.snackBar.open('Error loading organization members. Please try again.', 'Close', { duration: 5000 });
+        this.members = [];
       }
     });
   }
@@ -297,8 +295,8 @@ export class SettingsComponent implements OnInit {
         lastName: currentUser.last_name || '',
         email: currentUser.email || '',
         phoneNumber: '', // Phone number not available in current User interface
-        timezone: 'UTC', // Default timezone
-        language: 'English' // Default language
+        timezone: '',
+        language: ''
       };
     }
   }

@@ -45,7 +45,6 @@
     <div class="empty-state" *ngIf="assistants.length === 0 && !isLoading && !error">
       <mat-icon>smart_toy</mat-icon>
       <p>No assistants found</p>
-      <button mat-flat-button color="primary" (click)="createAssistant()">Create Assistant</button>
     </div>
     
     <!-- Loading State -->
@@ -190,7 +189,7 @@
               
               <div class="field">
                 <textarea rows="6" [(ngModel)]="systemPrompt" 
-                  placeholder="This is a blank template with minimal defaults, you can change the model, temperature, and messages."></textarea>
+                  placeholder="Enter your system prompt here..."></textarea>
                 <div class="textarea-actions">
                   <button mat-button class="generate-button">
                     <mat-icon>auto_fix_high</mat-icon>

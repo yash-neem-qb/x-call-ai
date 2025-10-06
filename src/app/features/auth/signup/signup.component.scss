@@ -1,0 +1,306 @@
+.signup-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+.signup-card {
+  background-color: var(--surface-color, #1a1a1a);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.signup-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h2 {
+    color: var(--text-primary, #fff);
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    color: var(--text-secondary, #8a8f9d);
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+.signup-form {
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    label {
+      display: block;
+      color: var(--text-primary, #fff);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: var(--input-bg, #10131c);
+      border: 1px solid var(--input-border, #1d2333);
+      border-radius: 8px;
+      color: var(--text-primary, #fff);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
+
+      &::placeholder {
+        color: var(--text-placeholder, #6b7280);
+      }
+
+      &:focus {
+        border-color: var(--primary-color, #0de47f);
+        box-shadow: 0 0 0 3px rgba(13, 228, 127, 0.1);
+      }
+
+      &.error {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      }
+    }
+
+    .password-input {
+      position: relative;
+
+      .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--text-secondary, #8a8f9d);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: color 0.2s ease;
+
+        &:hover {
+          color: var(--text-primary, #fff);
+        }
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+
+    .help-text {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #8a8f9d);
+      margin-top: 0.25rem;
+    }
+
+    .error-message {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      &.general-error {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 1rem;
+      }
+    }
+  }
+
+  .checkbox-group {
+    .checkbox-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-primary, #fff);
+      line-height: 1.4;
+
+      input[type="checkbox"] {
+        display: none;
+      }
+
+      .checkmark {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--input-border, #1d2333);
+        border-radius: 4px;
+        background-color: var(--input-bg, #10131c);
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 6px;
+          top: 2px;
+          width: 6px;
+          height: 10px;
+          border: solid var(--primary-color, #0de47f);
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+      }
+
+      input[type="checkbox"]:checked + .checkmark {
+        background-color: var(--primary-color, #0de47f);
+        border-color: var(--primary-color, #0de47f);
+
+        &::after {
+          opacity: 1;
+        }
+      }
+
+      .link {
+        color: var(--primary-color, #0de47f);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  .password-requirements {
+    margin-top: 0.75rem;
+    padding: 12px;
+    background-color: rgba(13, 228, 127, 0.05);
+    border: 1px solid rgba(13, 228, 127, 0.1);
+    border-radius: 6px;
+
+    .requirement {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-secondary, #8a8f9d);
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      &.valid {
+        color: var(--primary-color, #0de47f);
+      }
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+
+  .signup-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background-color: var(--primary-color, #0de47f);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
+
+    &:hover:not(:disabled) {
+      background-color: #0bc46b;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    &.loading {
+      background-color: #0bc46b;
+    }
+
+    .loading-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+
+      .spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+.login-link {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color, #333);
+
+  p {
+    color: var(--text-secondary, #8a8f9d);
+    margin: 0;
+
+    .link {
+      color: var(--primary-color, #0de47f);
+      text-decoration: none;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .signup-container {
+    padding: 16px;
+  }
+
+  .signup-card {
+    padding: 1.5rem;
+  }
+
+  .signup-header h2 {
+    font-size: 1.75rem;
+  }
+}

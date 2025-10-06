@@ -37,7 +37,7 @@ export interface TwilioImportData {
   styleUrls: ['./import-twilio-dialog.component.scss']
 })
 export class ImportTwilioDialogComponent {
-  twilioPhoneNumber: string = '+14156021922';
+  twilioPhoneNumber: string = '';
   twilioAccountSid: string = '';
   twilioAuthToken: string = '';
   phoneLabel: string = '';

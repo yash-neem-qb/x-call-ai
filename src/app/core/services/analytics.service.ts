@@ -24,7 +24,7 @@ export interface HourlyDistribution {
   }[];
 }
 
-export interface DashboardSummary {
+export interface AnalyticsDashboardSummary {
   total_assistants: number;
   total_calls: number;
   total_duration: number;
@@ -80,9 +80,9 @@ export class AnalyticsService {
   /**
    * Get dashboard summary
    */
-  getDashboardSummary(): Observable<DashboardSummary> {
+  getDashboardSummary(): Observable<AnalyticsDashboardSummary> {
     const organizationId = this.getOrganizationId();
-    return this.http.get<DashboardSummary>(
+    return this.http.get<AnalyticsDashboardSummary>(
       `${this.API_URL}/organizations/${organizationId}/dashboard/summary`
     );
   }

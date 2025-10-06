@@ -9,6 +9,27 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface SignupRequest {
+  first_name: string;
+  last_name: string;
+  email: string;
+  password: string;
+  organization_name?: string;
+}
+
+export interface SignupResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  user_id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  organization_id: string;
+  organization_name: string;
+}
+
 export interface LoginResponse {
   access_token: string;
   token_type: string;
@@ -101,6 +122,22 @@ export class AuthService {
   }
 
   /**
+   * Sign up new user
+   */
+  signup(userData: SignupRequest): Observable<SignupResponse> {
+    return this.http.post<SignupResponse>(`${this.API_URL}/auth/register`, userData)
+      .pipe(
+        tap((response: SignupResponse) => {
+          this.setAuthData(response);
+        }),
+        catchError((error) => {
+          console.error('Signup error:', error);
+          throw error;
+        })
+      );
+  }
+
+  /**
    * Logout user and clear authentication data
    */
   logout(): void {
@@ -176,6 +213,7 @@ export class AuthService {
     });
   }
 
+
   /**
    * Clear authentication data
    */
@@ -198,10 +236,10 @@ export class AuthService {
     if (!token) return true;
 
     try {
-      // For mock token that doesn't follow JWT format
-      if (token.startsWith('mock-jwt-token-')) {
-        // Mock tokens are considered valid for this demo
-        return false;
+      // Check for invalid token format
+      if (token.startsWith('mock-') || token.includes('demo') || token.includes('test')) {
+        console.error('Invalid token format detected');
+        return true; // Consider invalid
       }
       
       // For real JWT tokens

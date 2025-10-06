@@ -200,7 +200,7 @@
     <!-- Transient Assistant Name Filter -->
     <div class="filter-dropdown" *ngIf="activeFilterType === 'transient'">
       <h3>Filter by Transient Assistant Name</h3>
-      <input type="text" [(ngModel)]="transientFilter.value" placeholder="Search by transient assistant name..." class="search-input">
+      <input type="text" [(ngModel)]="transientFilter.value" placeholder="Enter transient assistant name..." class="search-input">
       <button class="apply-btn" (click)="applyTransientFilter()">Apply</button>
     </div>
 
@@ -236,7 +236,7 @@
     <!-- Call ID Filter -->
     <div class="filter-dropdown" *ngIf="activeFilterType === 'callId'">
       <h3>Filter by Call ID</h3>
-      <input type="text" [(ngModel)]="callIdFilter.value" placeholder="Enter Call ID" class="search-input">
+      <input type="text" [(ngModel)]="callIdFilter.value" placeholder="Enter call ID..." class="search-input">
       <button class="apply-btn" (click)="applyCallIdFilter()">Apply</button>
     </div>
 

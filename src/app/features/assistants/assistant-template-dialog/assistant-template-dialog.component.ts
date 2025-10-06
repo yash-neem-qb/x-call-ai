@@ -44,14 +44,14 @@ export class AssistantTemplateDialogComponent {
   assistantName = 'New Assistant';
   selectedTemplate: AssistantTemplate | null = null;
   
-  // Default blank template
+  // Blank template
   blankTemplate: AssistantTemplate = {
     id: 'blank',
     name: 'Blank Template',
-    description: 'This blank slate template with minimal configurations. It\'s a starting point for creating your custom assistant.',
+    description: 'Start with a blank template and configure your assistant from scratch.',
     icon: 'add',
-    systemPrompt: 'You are a helpful assistant.',
-    firstMessage: 'Hello, how can I help you today?'
+    systemPrompt: '',
+    firstMessage: ''
   };
   
   // QuickStart templates

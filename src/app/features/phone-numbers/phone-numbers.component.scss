@@ -83,6 +83,26 @@
   }
 }
 
+.instruction-text {
+  padding: 16px;
+  text-align: center;
+  border-bottom: 1px solid #222;
+  
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0 0 8px 0;
+  }
+  
+  p {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
 .phone-list {
   flex: 1;
   overflow-y: auto;

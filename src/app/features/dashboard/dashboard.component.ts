@@ -102,7 +102,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           // Create organization object from response
           const org: Organization = {
             organization_id: orgData.id || this.currentUser.organization_id,
-            organization_name: orgData.name || 'My Organization',
+            organization_name: orgData.name || 'Unknown Organization',
             role: 'owner', // Assuming current user is owner
             is_active: orgData.is_active || true,
             joined_at: orgData.created_at || new Date().toISOString()
@@ -237,7 +237,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Call with assistant
    */
   callAssistant(assistant: Assistant): void {
-    const phoneNumber = prompt('Enter phone number to call (E.164 format, e.g. +1234567890):', '+1');
+    const phoneNumber = prompt('Enter phone number to call (E.164 format, e.g. +1234567890):');
     
     if (phoneNumber) {
       const request: MakeCallRequest = {

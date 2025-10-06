@@ -38,7 +38,7 @@ export class CreatePhoneNumberDialogComponent implements OnInit, OnDestroy {
   // Step 1: Country and region selection
   countries: { code: string; name: string; }[] = [];
   regions: { code: string; name: string; }[] = [];
-  selectedCountry = 'US'; // Default to US
+  selectedCountry = '';
   selectedRegion = '';
   isLoadingCountries = false;
   isLoadingRegions = false;

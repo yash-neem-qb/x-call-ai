@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -100,7 +101,7 @@ interface ReasonFilter {
 @Component({
   selector: 'app-calls',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatProgressSpinnerModule, MatSnackBarModule],
   templateUrl: './calls.component.html',
   styleUrls: ['./calls.component.scss']
 })
@@ -156,7 +157,8 @@ export class CallsComponent implements OnInit, OnDestroy {
     private http: HttpClient,
     private authService: AuthService,
     private assistantService: AssistantService,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {}
   
   ngOnInit(): void {
@@ -171,14 +173,15 @@ export class CallsComponent implements OnInit, OnDestroy {
   }
   
   loadCallLogs(): void {
+    console.log('loadCallLogs() called - current page:', this.currentPage, 'search term:', this.searchTerm);
     this.isLoading = true;
     
     // Get organization ID from current user
     const currentUser = this.authService.getCurrentUser();
     if (!currentUser || !currentUser.organization_id) {
       console.error('No organization ID found for current user');
+      this.snackBar.open('Error: No organization ID found. Please log in again.', 'Close', { duration: 5000 });
       this.callLogs = [];
-      this.applyFilters();
       this.calculateStatistics();
       this.isLoading = false;
       return;
@@ -310,14 +313,13 @@ export class CallsComponent implements OnInit, OnDestroy {
           this.totalCalls = response.total || 0;
           this.totalPages = response.total_pages || 1;
           
-          this.applyFilters();
           this.calculateStatistics();
           this.isLoading = false;
         },
         error: (err) => {
           console.error('Error loading call logs:', err);
+          this.snackBar.open('Error loading call logs. Please try again.', 'Close', { duration: 5000 });
           this.callLogs = [];
-          this.applyFilters();
           this.calculateStatistics();
           this.isLoading = false;
         }
@@ -377,37 +379,6 @@ export class CallsComponent implements OnInit, OnDestroy {
       });
   }
   
-  generateMockCallLogs(): CallLog[] {
-    const mockCalls: CallLog[] = [];
-    const directions: ('inbound' | 'outbound' | 'web')[] = ['web', 'inbound', 'outbound'];
-    const statuses = ['completed', 'failed', 'initiated'];
-    
-    for (let i = 0; i < 25; i++) {
-      const direction = directions[Math.floor(Math.random() * directions.length)];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      const duration = Math.floor(Math.random() * 300) + 10; // 10-310 seconds
-      const cost = Math.random() * 0.1; // 0-0.1 USD
-      
-      mockCalls.push({
-        id: this.generateCallId(),
-        organizationId: 'org-1',
-        assistantId: `assistant-${Math.floor(Math.random() * 3) + 1}`,
-        fromNumber: direction === 'web' ? undefined : '+1234567890',
-        toNumber: direction === 'web' ? undefined : '+0987654321',
-        direction,
-        status,
-        sessionId: direction === 'web' ? `session-${i}` : undefined,
-        startedAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        endedAt: status === 'completed' ? new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000 + duration * 1000).toISOString() : undefined,
-        durationSeconds: status === 'completed' ? duration : undefined,
-        costUsd: cost,
-        createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-    }
-    
-    return mockCalls.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
   
   generateCallId(): string {
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -531,6 +502,7 @@ export class CallsComponent implements OnInit, OnDestroy {
   }
 
   applyFilters(): void {
+    console.log('applyFilters() called');
     // Since we're now using server-side filtering, we just need to reload the data
     // The filtering logic is handled in the loadCallLogs method
     this.currentPage = 1; // Reset to first page when applying filters

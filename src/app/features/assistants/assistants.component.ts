@@ -66,7 +66,7 @@ export class AssistantsComponent implements OnInit, OnDestroy {
   isCreating = false;
   manualVoiceId = false; // For manual voice ID input toggle
   showCodePanel = false; // For showing JSON configuration panel
-  private _firstMessageMode = 'assistant'; // Default first message mode
+  private _firstMessageMode = '';
   
   // Properties for two-way binding
   private _modelProvider = 'openai';
@@ -504,11 +504,11 @@ export class AssistantsComponent implements OnInit, OnDestroy {
         this._voiceProvider = this.newAssistant.voice.provider;
         this._voiceId = this.newAssistant.voice.voiceId;
         this._speakingRate = this.newAssistant.voice.speed || 1.0;
-        this._pitch = 1.0; // Default pitch value
+        this._pitch = 1.0;
         this._transcriberProvider = this.newAssistant.transcriber.provider;
         this._transcriberLanguage = this.newAssistant.transcriber.language || 'en';
         this._transcriberModel = this.newAssistant.transcriber.model || 'nova-3';
-        this._firstMessageMode = 'assistant'; // Default to assistant speaks first
+        this._firstMessageMode = 'assistant';
       }
     });
   }

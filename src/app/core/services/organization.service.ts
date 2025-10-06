@@ -51,8 +51,6 @@ export class OrganizationService {
 
   /**
    * Get organizations for the current user
-   * Note: This is a compatibility method that returns a mock response
-   * since the API doesn't have an endpoint to list all organizations
    */
   getOrganizations(): Observable<OrganizationsResponse> {
     const user = this.authService.getCurrentUser();
@@ -60,12 +58,12 @@ export class OrganizationService {
       throw new Error('Organization ID not available');
     }
     
-    // Return a mock response with the current organization
+    // Return current organization only
     return this.getOrganization(user.organization_id).pipe(
       map(org => {
         const organization: Organization = {
           organization_id: org.id || user.organization_id,
-          organization_name: org.name || user.organization_name || 'My Organization',
+          organization_name: org.name || user.organization_name || 'Unknown Organization',
           role: 'owner',
           is_active: true,
           joined_at: org.created_at || new Date().toISOString()

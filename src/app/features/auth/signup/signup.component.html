@@ -1,0 +1,167 @@
+<div class="signup-container content-above-particles">
+  <div class="signup-card">
+    <div class="signup-header">
+      <h2>Create Account</h2>
+      <p>Join X-Call AI and start building intelligent voice assistants</p>
+    </div>
+
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
+      <!-- First Name -->
+      <div class="form-group">
+        <label for="firstName">First Name *</label>
+        <input
+          type="text"
+          id="firstName"
+          formControlName="firstName"
+          placeholder="Enter your first name"
+          [class.error]="isFieldInvalid('firstName')"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('firstName')">
+          <span *ngIf="signupForm.get('firstName')?.errors?.['required']">First name is required</span>
+          <span *ngIf="signupForm.get('firstName')?.errors?.['minlength']">First name must be at least 2 characters</span>
+        </div>
+      </div>
+
+      <!-- Last Name -->
+      <div class="form-group">
+        <label for="lastName">Last Name *</label>
+        <input
+          type="text"
+          id="lastName"
+          formControlName="lastName"
+          placeholder="Enter your last name"
+          [class.error]="isFieldInvalid('lastName')"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('lastName')">
+          <span *ngIf="signupForm.get('lastName')?.errors?.['required']">Last name is required</span>
+          <span *ngIf="signupForm.get('lastName')?.errors?.['minlength']">Last name must be at least 2 characters</span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="Enter your email address"
+          [class.error]="isFieldInvalid('email')"
+        />
+        <div class="error-message" *ngIf="isFieldInvalid('email')">
+          <span *ngIf="signupForm.get('email')?.errors?.['required']">Email is required</span>
+          <span *ngIf="signupForm.get('email')?.errors?.['email']">Please enter a valid email address</span>
+        </div>
+      </div>
+
+      <!-- Organization Name -->
+      <div class="form-group">
+        <label for="organizationName">Organization Name</label>
+        <input
+          type="text"
+          id="organizationName"
+          formControlName="organizationName"
+          placeholder="Enter your organization name (optional)"
+        />
+        <div class="help-text">This will be your default organization</div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <div class="password-input">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="Create a strong password"
+            [class.error]="isFieldInvalid('password')"
+          />
+          <button type="button" class="password-toggle" (click)="togglePasswordVisibility()">
+            <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="isFieldInvalid('password')">
+          <span *ngIf="signupForm.get('password')?.errors?.['required']">Password is required</span>
+          <span *ngIf="signupForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters</span>
+          <span *ngIf="signupForm.get('password')?.errors?.['pattern']">Password must contain at least one uppercase letter, one lowercase letter, and one number</span>
+        </div>
+        <div class="password-requirements">
+          <div class="requirement" [class.valid]="hasMinLength">
+            <mat-icon>{{ hasMinLength ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            <span>At least 8 characters</span>
+          </div>
+          <div class="requirement" [class.valid]="hasUppercase">
+            <mat-icon>{{ hasUppercase ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            <span>One uppercase letter</span>
+          </div>
+          <div class="requirement" [class.valid]="hasLowercase">
+            <mat-icon>{{ hasLowercase ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            <span>One lowercase letter</span>
+          </div>
+          <div class="requirement" [class.valid]="hasNumber">
+            <mat-icon>{{ hasNumber ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+            <span>One number</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <div class="password-input">
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="Confirm your password"
+            [class.error]="isFieldInvalid('confirmPassword')"
+          />
+          <button type="button" class="password-toggle" (click)="toggleConfirmPasswordVisibility()">
+            <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="isFieldInvalid('confirmPassword')">
+          <span *ngIf="signupForm.get('confirmPassword')?.errors?.['required']">Please confirm your password</span>
+          <span *ngIf="signupForm.get('confirmPassword')?.errors?.['mismatch']">Passwords do not match</span>
+        </div>
+      </div>
+
+      <!-- Terms and Conditions -->
+      <div class="form-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="acceptTerms" />
+          <span class="checkmark"></span>
+          I agree to the <a href="#" class="link">Terms of Service</a> and <a href="#" class="link">Privacy Policy</a>
+        </label>
+        <div class="error-message" *ngIf="isFieldInvalid('acceptTerms')">
+          <span *ngIf="signupForm.get('acceptTerms')?.errors?.['required']">You must accept the terms and conditions</span>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        class="signup-btn"
+        [disabled]="signupForm.invalid || isLoading"
+        [class.loading]="isLoading"
+      >
+        <span *ngIf="!isLoading">Create Account</span>
+        <span *ngIf="isLoading" class="loading-content">
+          <mat-icon class="spinning">refresh</mat-icon>
+          Creating Account...
+        </span>
+      </button>
+
+      <!-- Error Message -->
+      <div class="error-message general-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+    </form>
+
+    <!-- Login Link -->
+    <div class="login-link">
+      <p>Already have an account? <a href="#" (click)="goToLogin(); $event.preventDefault()" class="link">Sign in</a></p>
+    </div>
+  </div>
+</div>

@@ -96,7 +96,7 @@ export class CallDetailComponent implements OnInit, OnDestroy {
   call: CallDetail | null = null;
   isLoading = true;
   error: string | null = null;
-  activeTab = 0; // Default to Transcripts tab
+  activeTab = 0;
   
   // Messages tab properties
   messageSearchTerm: string = '';

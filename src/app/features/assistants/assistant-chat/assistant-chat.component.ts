@@ -13,6 +13,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient } from '@angular/common/http';
 import { WebRTCAssistantService, ChatMessage, WebRTCState } from '../../../core/services/webrtc-assistant.service';
 import { Assistant } from '../../../core/services/assistant.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-assistant-chat',
@@ -78,6 +79,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     private webrtcService: WebRTCAssistantService,
     private snackBar: MatSnackBar,
     private http: HttpClient,
+    private authService: AuthService,
     @Inject(MAT_DIALOG_DATA) public data: { assistant: Assistant },
     private dialogRef: MatDialogRef<AssistantChatComponent>
   ) {
@@ -600,17 +602,17 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   private async playAudioWithWebAudio(base64Audio: string, format: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        // Ensure playback audio context is properly initialized
-        if (!this.playbackAudioContext) {
-          await this.initializeAudioContexts();
-        }
+    // Ensure playback audio context is properly initialized
+    if (!this.playbackAudioContext) {
+      await this.initializeAudioContexts();
+    }
 
-        // Always resume playback context before playing audio
-        if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
-          console.log('🎵 Playback audio context suspended, resuming...');
-          await this.playbackAudioContext.resume();
-          console.log('🎵 Playback audio context resumed, state:', this.playbackAudioContext.state);
-        }
+    // Always resume playback context before playing audio
+    if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
+      console.log('🎵 Playback audio context suspended, resuming...');
+      await this.playbackAudioContext.resume();
+      console.log('🎵 Playback audio context resumed, state:', this.playbackAudioContext.state);
+    }
 
         // Stop any currently playing audio
         if (this.currentAudioSource) {
@@ -622,44 +624,44 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           this.currentAudioSource = null;
         }
 
-        // Decode base64 to bytes
-        const audioData = atob(base64Audio);
-        const audioBytes = new Uint8Array(audioData.length);
-        for (let i = 0; i < audioData.length; i++) {
-          audioBytes[i] = audioData.charCodeAt(i);
-        }
-        
-        let pcmData: Float32Array;
-        let sampleRate: number;
-        
-        if (format === 'pcm_16000') {
-          // Handle PCM 16kHz format (browser-friendly)
-          pcmData = this.decodePCM16(audioBytes);
-          sampleRate = 16000;
-        } else if (format === 'ulaw_8000') {
-          // Handle μ-law 8kHz format (legacy/Twilio)
-          pcmData = this.decodeULaw(audioBytes);
-          sampleRate = 8000;
-        } else {
-          throw new Error(`Unsupported audio format: ${format}`);
-        }
-        
-        // Create audio buffer using playback audio context
-        const audioBuffer = this.playbackAudioContext.createBuffer(1, pcmData.length, sampleRate);
-        const channelData = audioBuffer.getChannelData(0);
-        channelData.set(pcmData);
-        
-        // Play the audio with proper gain control using playback audio context
-        const source = this.playbackAudioContext.createBufferSource();
-        const gainNode = this.playbackAudioContext.createGain();
-        
-        // Set volume to maximum (1.0)
-        gainNode.gain.setValueAtTime(1.0, this.playbackAudioContext.currentTime);
-        
-        // Connect audio graph: source -> gain -> destination
-        source.buffer = audioBuffer;
-        source.connect(gainNode);
-        gainNode.connect(this.playbackAudioContext.destination);
+      // Decode base64 to bytes
+      const audioData = atob(base64Audio);
+      const audioBytes = new Uint8Array(audioData.length);
+      for (let i = 0; i < audioData.length; i++) {
+        audioBytes[i] = audioData.charCodeAt(i);
+      }
+      
+      let pcmData: Float32Array;
+      let sampleRate: number;
+      
+      if (format === 'pcm_16000') {
+        // Handle PCM 16kHz format (browser-friendly)
+        pcmData = this.decodePCM16(audioBytes);
+        sampleRate = 16000;
+      } else if (format === 'ulaw_8000') {
+        // Handle μ-law 8kHz format (legacy/Twilio)
+        pcmData = this.decodeULaw(audioBytes);
+        sampleRate = 8000;
+      } else {
+        throw new Error(`Unsupported audio format: ${format}`);
+      }
+      
+      // Create audio buffer using playback audio context
+      const audioBuffer = this.playbackAudioContext.createBuffer(1, pcmData.length, sampleRate);
+      const channelData = audioBuffer.getChannelData(0);
+      channelData.set(pcmData);
+      
+      // Play the audio with proper gain control using playback audio context
+      const source = this.playbackAudioContext.createBufferSource();
+      const gainNode = this.playbackAudioContext.createGain();
+      
+      // Set volume to maximum (1.0)
+      gainNode.gain.setValueAtTime(1.0, this.playbackAudioContext.currentTime);
+      
+      // Connect audio graph: source -> gain -> destination
+      source.buffer = audioBuffer;
+      source.connect(gainNode);
+      gainNode.connect(this.playbackAudioContext.destination);
         
         // Store current audio source for potential stopping
         this.currentAudioSource = source;
@@ -670,10 +672,10 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           this.currentAudioSource = null;
           resolve(); // Resolve promise when audio finishes
         };
-        
-        // Start playback immediately
-        source.start(0);
-        
+      
+      // Start playback immediately
+      source.start(0);
+
       } catch (error) {
         console.error('🎵 Error in playAudioWithWebAudio:', error);
         this.currentAudioSource = null;
@@ -758,8 +760,15 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   private logCallStart(): void {
     if (!this.assistant) return;
 
+    // Get organization ID from auth service
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.organization_id) {
+      console.error('No organization ID found for current user');
+      return;
+    }
+
     const callData = {
-      organizationId: 'org-1', // TODO: Get from auth service
+      organizationId: currentUser.organization_id,
       assistantId: this.assistant.id,
       direction: 'web',
       status: 'initiated',
@@ -801,11 +810,12 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Calculate call cost (mock implementation)
+   * Calculate call cost
    */
   private calculateCallCost(durationSeconds: number): number {
-    // Mock cost calculation: $0.01 per minute
-    return (durationSeconds / 60) * 0.01;
+    // TODO: Implement actual cost calculation based on service provider
+    console.warn('Call cost calculation not implemented');
+    return 0;
   }
 
   /**
