@@ -1,0 +1,174 @@
+<h2 mat-dialog-title>
+  <span *ngIf="currentStep === 1">Select Country & Region</span>
+  <span *ngIf="currentStep === 2">Choose a Phone Number</span>
+  <span *ngIf="currentStep === 3">Configure Phone Number</span>
+</h2>
+
+<mat-dialog-content>
+  <!-- Step progress indicator -->
+  <div class="step-progress">
+    <div class="step-dots">
+      <div class="step-dot" [class.active]="currentStep >= 1"></div>
+      <div class="step-dot" [class.active]="currentStep >= 2"></div>
+      <div class="step-dot" [class.active]="currentStep >= 3"></div>
+    </div>
+    <div class="step-label">Step {{ currentStep }} of {{ totalSteps }}</div>
+  </div>
+
+  <!-- Step 1: Country & Region Selection -->
+  <div class="step-content" *ngIf="currentStep === 1">
+    <div class="form-group">
+      <label>Country</label>
+      <div class="select-wrapper">
+        <mat-select [(ngModel)]="selectedCountry" (selectionChange)="loadRegions()" panelClass="dark-panel" [disabled]="isLoadingCountries">
+          <mat-option *ngFor="let country of countries" [value]="country.code">
+            {{ country.name }}
+          </mat-option>
+        </mat-select>
+      </div>
+      <div class="loading-indicator" *ngIf="isLoadingCountries">
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Loading countries...</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Region</label>
+      <div class="select-wrapper">
+        <mat-select [(ngModel)]="selectedRegion" panelClass="dark-panel" [disabled]="isLoadingRegions || regions.length === 0">
+          <mat-option *ngFor="let region of regions" [value]="region.code">
+            {{ region.name }}
+          </mat-option>
+        </mat-select>
+      </div>
+      <div class="loading-indicator" *ngIf="isLoadingRegions">
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Loading regions...</span>
+      </div>
+      <div class="hint" *ngIf="!isLoadingRegions && regions.length === 0">
+        No regions available for selected country
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Available Phone Numbers -->
+  <div class="step-content" *ngIf="currentStep === 2">
+    <div class="loading-state" *ngIf="isLoadingNumbers">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Searching for available phone numbers...</p>
+    </div>
+
+    <div class="error-message" *ngIf="numberError">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ numberError }}</span>
+    </div>
+
+    <div class="number-list" *ngIf="!isLoadingNumbers && availableNumbers.length > 0">
+      <div 
+        class="number-item" 
+        *ngFor="let number of availableNumbers" 
+        [class.selected]="selectedPhoneNumber === number"
+        (click)="selectNumber(number)"
+      >
+        <div class="number-value">{{ number.phone_number }}</div>
+        <div class="number-details">
+          <div class="number-location">{{ number.region }}, {{ number.country }}</div>
+          <div class="number-cost">${{ number.monthly_cost }}/month</div>
+        </div>
+        <div class="number-capabilities">
+          <div class="capability" [class.active]="number.capabilities.voice">
+            <mat-icon>call</mat-icon>
+          </div>
+          <div class="capability" [class.active]="number.capabilities.sms">
+            <mat-icon>sms</mat-icon>
+          </div>
+          <div class="capability" [class.active]="number.capabilities.mms">
+            <mat-icon>mms</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Configure Phone Number -->
+  <div class="step-content" *ngIf="currentStep === 3">
+    <div class="selected-number">
+      <div class="number-value">{{ selectedPhoneNumber?.phone_number }}</div>
+      <div class="number-details">
+        <div class="number-location">{{ selectedPhoneNumber?.region }}, {{ selectedPhoneNumber?.country }}</div>
+        <div class="number-cost">${{ selectedPhoneNumber?.monthly_cost }}/month</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Friendly Name</label>
+      <input type="text" [(ngModel)]="friendlyName" placeholder="Enter a friendly name for this number">
+    </div>
+
+    <div class="form-group">
+      <label>Assign to Assistant (Optional)</label>
+      <div class="select-wrapper">
+        <mat-select [(ngModel)]="selectedAssistantId" panelClass="dark-panel">
+          <mat-option [value]="">None</mat-option>
+          <mat-option *ngFor="let assistant of data.assistants" [value]="assistant.id">
+            {{ assistant.name }}
+          </mat-option>
+        </mat-select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Capabilities</label>
+      <div class="capabilities-checkboxes">
+        <div class="capability-checkbox">
+          <mat-checkbox [(ngModel)]="capabilities.voice" color="primary">Voice</mat-checkbox>
+        </div>
+        <div class="capability-checkbox">
+          <mat-checkbox [(ngModel)]="capabilities.sms" color="primary">SMS</mat-checkbox>
+        </div>
+        <div class="capability-checkbox">
+          <mat-checkbox [(ngModel)]="capabilities.mms" color="primary">MMS</mat-checkbox>
+        </div>
+      </div>
+    </div>
+
+    <div class="error-message" *ngIf="purchaseError">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ purchaseError }}</span>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  
+  <button 
+    mat-button 
+    *ngIf="currentStep > 1" 
+    (click)="previousStep()"
+    [disabled]="isLoadingNumbers || isPurchasing"
+  >
+    Back
+  </button>
+  
+  <button 
+    mat-flat-button 
+    color="primary" 
+    *ngIf="currentStep === 1" 
+    (click)="searchAvailableNumbers()"
+    [disabled]="!selectedCountry || isLoadingCountries || isLoadingRegions"
+  >
+    Search Numbers
+  </button>
+  
+  <button 
+    mat-flat-button 
+    color="primary" 
+    *ngIf="currentStep === 3" 
+    (click)="purchaseNumber()"
+    [disabled]="isPurchasing || !friendlyName"
+  >
+    <mat-spinner diameter="20" *ngIf="isPurchasing"></mat-spinner>
+    <span>{{ isPurchasing ? 'Purchasing...' : 'Purchase Number' }}</span>
+  </button>
+</mat-dialog-actions>

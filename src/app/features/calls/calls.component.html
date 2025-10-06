@@ -1,0 +1,391 @@
+<div class="calls-page">
+  <!-- Header -->
+  <div class="calls-header">
+    <div class="header-content">
+      <h1>Call Logs</h1>
+      <p>View and manage call logs for your account.</p>
+    </div>
+    
+    <div class="header-actions">
+      <button class="refresh-btn" (click)="refreshCallLogs()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+      <button class="export-btn" (click)="exportCallLogs()">
+        <mat-icon>download</mat-icon>
+        Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Filters -->
+  <div class="quick-filters">
+    <div class="filter-stats">
+      <div class="stat-item" 
+           [class.active]="quickFilter === 'all'"
+           (click)="applyQuickFilter('all')">
+        <span class="stat-label">All Calls</span>
+        <span class="stat-value">{{ totalCalls }}</span>
+      </div>
+      <div class="stat-item" 
+           [class.active]="quickFilter === 'transferred'"
+           (click)="applyQuickFilter('transferred')">
+        <span class="stat-label">Transferred</span>
+        <span class="stat-value">{{ transferredCalls }}</span>
+      </div>
+      <div class="stat-item" 
+           [class.active]="quickFilter === 'successful'"
+           (click)="applyQuickFilter('successful')">
+        <span class="stat-label">Successful</span>
+        <span class="stat-value">{{ successfulCalls }}</span>
+      </div>
+      <div class="stat-item" 
+           [class.active]="quickFilter === 'failed'"
+           (click)="applyQuickFilter('failed')">
+        <span class="stat-label">Failed</span>
+        <span class="stat-value">{{ failedCalls }}</span>
+      </div>
+    </div>
+    <p class="filter-note">Quick filters show counts for currently loaded results only.</p>
+  </div>
+
+  <!-- Vapi-style Filter Buttons -->
+  <div class="vapi-filters">
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'date'"
+         (click)="toggleFilterDropdown('date')">
+      <mat-icon>add</mat-icon>
+      Date and Time
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'cost'"
+         (click)="toggleFilterDropdown('cost')">
+      <mat-icon>add</mat-icon>
+      Cost
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'type'"
+         (click)="toggleFilterDropdown('type')">
+      <mat-icon>add</mat-icon>
+      Call Type
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'assistant'"
+         (click)="toggleFilterDropdown('assistant')">
+      <mat-icon>add</mat-icon>
+      Assistant
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'transient'"
+         (click)="toggleFilterDropdown('transient')">
+      <mat-icon>add</mat-icon>
+      Transient Assistant Name
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'phone'"
+         (click)="toggleFilterDropdown('phone')">
+      <mat-icon>add</mat-icon>
+      Assistant Phone Number
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'customer'"
+         (click)="toggleFilterDropdown('customer')">
+      <mat-icon>add</mat-icon>
+      Customer Phone Number
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'callId'"
+         (click)="toggleFilterDropdown('callId')">
+      <mat-icon>add</mat-icon>
+      Call ID
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'success'"
+         (click)="toggleFilterDropdown('success')">
+      <mat-icon>add</mat-icon>
+      Success Evaluation
+    </div>
+    <div class="filter-button" 
+         [class.active]="activeFilterType === 'reason'"
+         (click)="toggleFilterDropdown('reason')">
+      <mat-icon>add</mat-icon>
+      Ended Reason
+    </div>
+  </div>
+
+  <!-- Filter Dropdowns -->
+  <div class="filter-dropdowns" *ngIf="activeFilterType">
+    <!-- Date and Time Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'date'">
+      <h3>Filter by Date and Time</h3>
+      <div class="filter-input-group">
+        <select [(ngModel)]="dateFilter.operator" class="operator-select">
+          <option value="is_equal_to">is equal to</option>
+          <option value="is_before">is before</option>
+          <option value="is_after">is after</option>
+          <option value="is_between">is between</option>
+        </select>
+        <div class="date-input-group">
+          <input type="datetime-local" [(ngModel)]="dateFilter.value" class="date-input">
+          <mat-icon class="calendar-icon">calendar_today</mat-icon>
+        </div>
+      </div>
+      <button class="apply-btn" (click)="applyDateFilter()">Apply</button>
+    </div>
+
+    <!-- Cost Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'cost'">
+      <h3>Filter by Cost</h3>
+      <div class="filter-input-group">
+        <select [(ngModel)]="costFilter.operator" class="operator-select">
+          <option value="is_equal_to">is equal to</option>
+          <option value="is_greater_than">is greater than</option>
+          <option value="is_less_than">is less than</option>
+          <option value="is_between">is between</option>
+        </select>
+        <div class="cost-input-group">
+          <input type="number" [(ngModel)]="costFilter.value" placeholder="0" class="cost-input" step="0.01">
+          <mat-icon class="range-icon">swap_horiz</mat-icon>
+        </div>
+      </div>
+      <button class="apply-btn" (click)="applyCostFilter()">Apply</button>
+    </div>
+
+    <!-- Call Type Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'type'">
+      <h3>Filter by Call Type</h3>
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="typeFilter.inbound">
+          <span class="checkmark"></span>
+          Inbound
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="typeFilter.outbound">
+          <span class="checkmark"></span>
+          Outbound
+        </label>
+        <label class="checkbox-item">
+          <input type="checkbox" [(ngModel)]="typeFilter.web">
+          <span class="checkmark"></span>
+          Web
+        </label>
+      </div>
+      <button class="apply-btn" (click)="applyTypeFilter()">Apply</button>
+    </div>
+
+    <!-- Assistant Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'assistant'">
+      <h3>Filter by Assistant</h3>
+      <div class="select-group">
+        <select [(ngModel)]="assistantFilter.selectedId" class="assistant-select">
+          <option value="">Select...</option>
+          <option *ngFor="let assistant of assistants" [value]="assistant.id">
+            {{ assistant.name }}
+          </option>
+        </select>
+        <div class="search-group">
+          <mat-icon>search</mat-icon>
+          <input type="text" placeholder="Search..." class="search-input">
+        </div>
+      </div>
+      <div class="assistant-list">
+        <div class="assistant-item" *ngFor="let assistant of assistants">
+          <span class="assistant-name">{{ assistant.name }}</span>
+          <span class="assistant-meta">(Created {{ getAssistantAge(assistant.createdAt) }} - {{ assistant.id | slice:0:8 }})</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transient Assistant Name Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'transient'">
+      <h3>Filter by Transient Assistant Name</h3>
+      <input type="text" [(ngModel)]="transientFilter.value" placeholder="Search by transient assistant name..." class="search-input">
+      <button class="apply-btn" (click)="applyTransientFilter()">Apply</button>
+    </div>
+
+    <!-- Assistant Phone Number Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'phone'">
+      <h3>Filter by Assistant Phone Number</h3>
+      <div class="select-group">
+        <select [(ngModel)]="phoneFilter.selectedNumber" class="phone-select">
+          <option value="">Select...</option>
+          <option *ngFor="let phone of phoneNumbers" [value]="phone.phone_number">
+            {{ phone.phone_number }}
+          </option>
+        </select>
+        <div class="search-group">
+          <mat-icon>search</mat-icon>
+          <input type="text" placeholder="Search..." class="search-input">
+        </div>
+      </div>
+      <div class="phone-list">
+        <div class="phone-item" *ngFor="let phone of phoneNumbers">
+          {{ phone.phone_number }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Customer Phone Number Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'customer'">
+      <h3>Filter by Customer Phone Number</h3>
+      <input type="text" [(ngModel)]="customerFilter.value" placeholder="Enter customer phone number..." class="search-input">
+      <button class="apply-btn" (click)="applyCustomerFilter()">Apply</button>
+    </div>
+
+    <!-- Call ID Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'callId'">
+      <h3>Filter by Call ID</h3>
+      <input type="text" [(ngModel)]="callIdFilter.value" placeholder="Enter Call ID" class="search-input">
+      <button class="apply-btn" (click)="applyCallIdFilter()">Apply</button>
+    </div>
+
+    <!-- Success Evaluation Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'success'">
+      <h3>Filter by Success Evaluation</h3>
+      <div class="select-group">
+        <select [(ngModel)]="successFilter.value" class="success-select">
+          <option value="">Select...</option>
+          <option value="pass">Pass</option>
+          <option value="fail">Fail</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Ended Reason Filter -->
+    <div class="filter-dropdown" *ngIf="activeFilterType === 'reason'">
+      <h3>Filter by Ended Reason</h3>
+      <input type="text" [(ngModel)]="reasonFilter.value" placeholder="Enter Ended Reason" class="search-input">
+      <button class="apply-btn" (click)="applyReasonFilter()">Apply</button>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  <div class="bulk-actions-bar" *ngIf="selectedCallsCount > 0">
+    <div class="bulk-actions-content">
+      <span class="selected-count">{{ selectedCallsCount }} call(s) selected</span>
+      <button class="bulk-delete-btn" (click)="deleteSelectedCalls()">
+        <mat-icon>delete</mat-icon>
+        Delete Selected
+      </button>
+    </div>
+  </div>
+
+  <!-- Call Logs Table -->
+  <div class="call-logs-table">
+    <div class="table-header">
+      <div class="header-cell checkbox-cell">
+        <input 
+          type="checkbox" 
+          [checked]="selectAll" 
+          [indeterminate]="selectedCallsCount > 0 && selectedCallsCount < callLogs.length"
+          (change)="toggleSelectAll()"
+          class="select-all-checkbox">
+      </div>
+      <div class="header-cell">CALL ID</div>
+      <div class="header-cell">ASSISTANT</div>
+      <div class="header-cell">ASSISTANT PHONE NUMBER</div>
+      <div class="header-cell">CUSTOMER PHONE NUMBER</div>
+      <div class="header-cell">TYPE</div>
+      <div class="header-cell">ENDED REASON</div>
+      <div class="header-cell">SUCCESS EVALUATION</div>
+      <div class="header-cell">START TIME</div>
+      <div class="header-cell">DURATION</div>
+      <div class="header-cell">COST</div>
+    </div>
+
+    <div class="table-body">
+      <div class="table-row clickable" *ngFor="let call of callLogs; trackBy: trackByCallId" (click)="viewCallDetails(call.id)">
+        <div class="table-cell checkbox-cell" (click)="$event.stopPropagation()">
+          <input 
+            type="checkbox" 
+            [checked]="isCallSelected(call.id)"
+            (change)="toggleCallSelection(call.id)"
+            class="row-checkbox">
+        </div>
+        <div class="table-cell call-id">
+          <span class="call-id-text">{{ call.id | slice:0:8 }}...</span>
+        </div>
+        
+        <div class="table-cell assistant">
+          <div class="assistant-info">
+            <span class="assistant-name">{{ getAssistantName(call.assistantId) }}</span>
+            <span class="assistant-id">{{ call.assistantId | slice:0:8 }}...</span>
+          </div>
+        </div>
+        
+        <div class="table-cell phone-number">
+          {{ call.toNumber || '-' }}
+        </div>
+        
+        <div class="table-cell phone-number">
+          {{ call.fromNumber || '-' }}
+        </div>
+        
+        <div class="table-cell call-type">
+          <div class="type-badge" [class]="'type-' + call.direction">
+            <mat-icon *ngIf="call.direction === 'web'">language</mat-icon>
+            <mat-icon *ngIf="call.direction === 'inbound'">call_received</mat-icon>
+            <mat-icon *ngIf="call.direction === 'outbound'">call_made</mat-icon>
+            {{ call.direction | titlecase }}
+          </div>
+        </div>
+        
+        <div class="table-cell ended-reason">
+          {{ getEndedReason(call) }}
+        </div>
+        
+        <div class="table-cell success-evaluation">
+          <span *ngIf="call.analysis_completed && call.call_success === true" class="success-badge pass">Pass</span>
+          <span *ngIf="call.analysis_completed && call.call_success === false" class="success-badge fail">Fail</span>
+          <span *ngIf="!call.analysis_completed" class="success-badge pending">Analyzing...</span>
+          <span *ngIf="call.analysis_completed === false" class="success-badge">-</span>
+        </div>
+        
+        <div class="table-cell start-time">
+          {{ formatStartTime(call.startedAt) }}
+        </div>
+        
+        <div class="table-cell duration">
+          {{ formatDuration(call.durationSeconds) }}
+        </div>
+        
+        <div class="table-cell cost">
+          {{ formatCost(call.costUsd) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading call logs...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && callLogs.length === 0">
+    <mat-icon>call_end</mat-icon>
+    <h3>No call logs found</h3>
+    <p>Start making calls to see them appear here.</p>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="callLogs.length > 0">
+    <button class="pagination-btn" 
+            [disabled]="currentPage === 1" 
+            (click)="previousPage()">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    
+    <span class="pagination-info">
+      Page {{ currentPage }} of {{ totalPages }}
+    </span>
+    
+    <button class="pagination-btn" 
+            [disabled]="currentPage === totalPages" 
+            (click)="nextPage()">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+</div>

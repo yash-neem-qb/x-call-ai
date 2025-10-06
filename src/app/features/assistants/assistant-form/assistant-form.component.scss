@@ -1,0 +1,268 @@
+.assistant-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-section {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #fff;
+}
+
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-field label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+}
+
+input[type="text"],
+select,
+textarea {
+  width: 100%;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+}
+
+input[type="range"] {
+  flex: 1;
+  margin-right: 12px;
+  background-color: #333;
+  height: 4px;
+  border-radius: 2px;
+  -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.slider-value {
+  font-size: 14px;
+  color: #888;
+  width: 30px;
+  text-align: right;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.cancel-button {
+  background-color: transparent;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.submit-button {
+  background-color: var(--primary-color);
+  border: none;
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.submit-button:hover {
+  opacity: 0.9;
+}
+
+.submit-button:disabled {
+  background-color: #333;
+  color: #888;
+  cursor: not-allowed;
+}
+
+// Voice Selection Styles
+.voice-filters {
+  margin-bottom: 12px;
+  padding: 12px;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.voice-search {
+  flex: 1;
+  min-width: 200px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.voice-search:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.accent-filter,
+.gender-filter {
+  min-width: 120px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.accent-filter:focus,
+.gender-filter:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.clear-filters-btn {
+  background-color: transparent;
+  border: 1px solid #666;
+  color: #ccc;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.clear-filters-btn:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.voice-select {
+  width: 100%;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 10px 12px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.voice-select:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.voice-preview {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #0f0f0f;
+  border: 1px solid #333;
+  border-radius: 4px;
+}
+
+.preview-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.voice-info {
+  font-size: 12px;
+  color: #888;
+}
+
+.preview-btn {
+  background-color: var(--primary-color);
+  border: none;
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.preview-btn:hover {
+  opacity: 0.9;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .voice-search,
+  .accent-filter,
+  .gender-filter {
+    min-width: auto;
+    width: 100%;
+  }
+}

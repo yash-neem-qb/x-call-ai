@@ -1,0 +1,58 @@
+<div class="template-dialog">
+  <div class="dialog-header">
+    <h2>
+      <mat-icon>smart_toy</mat-icon>
+      Create Assistant
+    </h2>
+  </div>
+
+  <div class="dialog-content">
+    <div class="template-section">
+      <h3>Choose a template</h3>
+      <p class="section-description">Here's a few templates to get you started, or you can create your own template and use it to create a new assistant.</p>
+      
+      <div class="assistant-name-field">
+        <label>Assistant Name <span class="hint">(This can be adjusted at any time after creation)</span></label>
+        <input type="text" [(ngModel)]="assistantName" placeholder="Enter assistant name">
+      </div>
+      
+      <!-- Blank Template -->
+      <div class="template-card" 
+           [class.selected]="selectedTemplate?.id === blankTemplate.id"
+           (click)="selectTemplate(blankTemplate)">
+        <div class="template-icon">
+          <mat-icon>{{ blankTemplate.icon }}</mat-icon>
+        </div>
+        <div class="template-info">
+          <h4>{{ blankTemplate.name }}</h4>
+          <p>{{ blankTemplate.description }}</p>
+        </div>
+      </div>
+      
+      <!-- QuickStart Section -->
+      <div class="section-divider">
+        <span>QUICKSTART</span>
+      </div>
+      
+      <div class="templates-grid">
+        <div class="template-card" 
+             *ngFor="let template of quickStartTemplates"
+             [class.selected]="selectedTemplate?.id === template.id"
+             (click)="selectTemplate(template)">
+          <div class="template-icon">
+            <mat-icon>{{ template.icon }}</mat-icon>
+          </div>
+          <div class="template-info">
+            <h4>{{ template.name }}</h4>
+            <p>{{ template.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="dialog-footer">
+    <button mat-button class="cancel-button" (click)="cancel()">Close</button>
+    <button mat-flat-button color="primary" class="create-button" (click)="createAssistant()">Create Assistant</button>
+  </div>
+</div>

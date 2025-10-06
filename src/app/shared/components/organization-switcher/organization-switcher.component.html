@@ -1,0 +1,90 @@
+<!-- Organization Switcher Modal -->
+<div class="org-switcher-modal">
+  <!-- Header with Search -->
+  <div class="modal-header">
+    <button class="back-button" (click)="closeModal()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <div class="search-container">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input 
+        type="text" 
+        placeholder="Search organizations..." 
+        class="search-input"
+        [(ngModel)]="searchQuery"
+        (input)="onSearchChange()"
+        #searchInput>
+      <button class="clear-button" *ngIf="searchQuery" (click)="clearSearch()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Actions Section -->
+  <div class="actions-section">
+    <div class="section-title">Actions</div>
+    <button class="create-org-button" (click)="createNewOrganization()">
+      <mat-icon>add</mat-icon>
+      <span>Create new organization</span>
+    </button>
+  </div>
+
+  <!-- Organizations List -->
+  <div class="organizations-section">
+    <div class="section-title">All Organizations</div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <mat-icon class="loading-icon">refresh</mat-icon>
+      <span>Loading organizations...</span>
+    </div>
+
+    <!-- Organizations List -->
+    <div class="organizations-list" *ngIf="!isLoading">
+      <div 
+        class="organization-item" 
+        *ngFor="let org of filteredOrganizations"
+        [class.current]="isCurrentOrganization(org)"
+        (click)="switchToOrganization(org)">
+        
+        <div class="org-info">
+          <div class="org-name">{{ getOrganizationDisplayName(org) }}</div>
+          <div class="org-meta">
+            <span class="org-role">{{ getOrganizationRole(org) | titlecase }}</span>
+            <span class="current-badge" *ngIf="isCurrentOrganization(org)">current</span>
+          </div>
+        </div>
+        
+        <button 
+          class="star-button" 
+          (click)="toggleStar(org); $event.stopPropagation()"
+          [class.starred]="false">
+          <mat-icon>star_border</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading && filteredOrganizations.length === 0">
+      <mat-icon>business</mat-icon>
+      <p>No organizations found</p>
+      <button class="create-org-button" (click)="createNewOrganization()">
+        <mat-icon>add</mat-icon>
+        <span>Create your first organization</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Footer with Shortcuts -->
+  <div class="modal-footer">
+    <div class="shortcuts">
+      <span class="shortcut">↑↓ to navigate</span>
+      <span class="shortcut">↵ to select</span>
+      <span class="shortcut">N New org</span>
+      <span class="shortcut">S Star/Unstar</span>
+    </div>
+    <div class="org-count">
+      {{ organizations.length }} organization{{ organizations.length !== 1 ? 's' : '' }}
+    </div>
+  </div>
+</div>

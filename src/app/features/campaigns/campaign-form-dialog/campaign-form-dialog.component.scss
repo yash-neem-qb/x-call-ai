@@ -1,0 +1,390 @@
+// Campaign Form Dialog - New Template Style (matching assistants page)
+.campaign-form-dialog {
+  background: #0f0f0f;
+  color: #ffffff;
+  min-width: 600px;
+  max-width: 800px;
+  width: 100%;
+
+  .dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 24px 0 24px;
+    border-bottom: 1px solid #222;
+    margin-bottom: 24px;
+
+    .back-button {
+      color: #888;
+      
+      &:hover {
+        color: #ffffff;
+      }
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: #ffffff;
+      flex: 1;
+      text-align: center;
+    }
+
+    .close-button {
+      color: #888;
+      
+      &:hover {
+        color: #ffffff;
+      }
+    }
+  }
+
+  .dialog-content {
+    padding: 0 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+
+    .campaign-form {
+      .form-section {
+        margin-bottom: 32px;
+
+        .field-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+
+          .field-label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0;
+          }
+
+          .info-icon {
+            color: #888;
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+
+          .template-button {
+            color: #0de47f;
+            font-size: 14px;
+            padding: 4px 8px;
+            min-width: auto;
+            
+            mat-icon {
+              font-size: 18px;
+              width: 18px;
+              height: 18px;
+              margin-right: 4px;
+            }
+          }
+        }
+
+        .full-width {
+          width: 100%;
+        }
+
+        // Info Box
+        .info-box {
+          background: #2a2a2a;
+          border: 1px solid #333;
+          border-radius: 8px;
+          padding: 16px;
+          margin-top: 12px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+
+          .info-icon {
+            color: #0de47f;
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+          }
+
+          .info-content {
+            flex: 1;
+
+            p {
+              margin: 0;
+              font-size: 14px;
+              color: #cccccc;
+              line-height: 1.5;
+
+              .info-link {
+                color: #0de47f;
+                text-decoration: none;
+                
+                &:hover {
+                  text-decoration: underline;
+                }
+              }
+            }
+          }
+        }
+
+        // Upload Area
+        .upload-area {
+          border: 2px dashed #555;
+          border-radius: 8px;
+          padding: 48px 24px;
+          text-align: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          background: #2a2a2a;
+
+          &:hover {
+            border-color: #0de47f;
+            background: #333;
+          }
+
+          &.dragover {
+            border-color: #0de47f;
+            background: rgba(13, 228, 127, 0.1);
+          }
+
+          .upload-icon {
+            font-size: 48px;
+            width: 48px;
+            height: 48px;
+            color: #888;
+            margin-bottom: 16px;
+          }
+
+          .upload-text {
+            font-size: 16px;
+            color: #cccccc;
+            margin: 0 0 8px 0;
+          }
+
+          .upload-limit {
+            font-size: 14px;
+            color: #888;
+            margin: 0;
+          }
+        }
+
+        // CSV Preview
+        .csv-preview {
+          margin-top: 24px;
+
+          h4 {
+            margin: 0 0 16px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+          }
+
+          .preview-table {
+            background: #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+
+              thead {
+                background: #333;
+
+                th {
+                  padding: 12px 16px;
+                  text-align: left;
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #ffffff;
+                  border-bottom: 1px solid #444;
+                }
+              }
+
+              tbody {
+                tr {
+                  border-bottom: 1px solid #333;
+
+                  &:last-child {
+                    border-bottom: none;
+                  }
+
+                  td {
+                    padding: 12px 16px;
+                    font-size: 14px;
+                    color: #cccccc;
+                  }
+                }
+              }
+            }
+          }
+
+          .preview-info {
+            margin: 12px 0 0 0;
+            font-size: 14px;
+            color: #888;
+          }
+        }
+
+        // Schedule Options
+        .schedule-options {
+          .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+
+            .radio-option {
+              flex: 1;
+              border: 2px solid #333;
+              border-radius: 8px;
+              padding: 16px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+
+              &:hover {
+                border-color: #555;
+              }
+
+              &.selected {
+                border-color: #0de47f;
+                background: rgba(13, 228, 127, 0.1);
+              }
+
+              .radio-button {
+                width: 100%;
+
+                ::ng-deep {
+                  .mat-mdc-radio-button {
+                    width: 100%;
+                  }
+
+                  .mdc-radio {
+                    display: none;
+                  }
+
+                  .mdc-form-field {
+                    width: 100%;
+                  }
+
+                  .mdc-form-field__label {
+                    width: 100%;
+                    text-align: center;
+                  }
+                }
+
+                .option-content {
+                  .option-title {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: #ffffff;
+                    text-align: center;
+                  }
+                }
+              }
+            }
+          }
+
+          .schedule-field {
+            margin-top: 16px;
+          }
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    padding: 24px;
+    border-top: 1px solid #222;
+    display: flex;
+    justify-content: center;
+
+    .launch-button {
+      background: #0de47f;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 12px 48px;
+      border-radius: 8px;
+      min-width: 200px;
+      text-transform: none;
+
+      &:disabled {
+        background: #555;
+        color: #888;
+      }
+
+      mat-spinner {
+        margin-right: 8px;
+      }
+    }
+  }
+}
+
+// Global Material Design overrides for dark theme
+::ng-deep {
+  .mat-mdc-dialog-container {
+    background: #0f0f0f;
+    color: #ffffff;
+  }
+
+  .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      background-color: #111521;
+      border: 1px solid #20283a;
+      border-radius: 6px;
+    }
+    
+    .mat-mdc-form-field-outline {
+      color: #20283a;
+    }
+    
+    .mat-mdc-form-field-focus-overlay {
+      background-color: transparent;
+    }
+    
+    .mat-mdc-input-element {
+      color: #ffffff;
+    }
+    
+    .mat-mdc-form-field-label {
+      color: #c9cbd1;
+    }
+    
+    .mat-mdc-form-field-label.mdc-floating-label--float-above {
+      color: #0de47f;
+    }
+    
+    .mat-mdc-select-value {
+      color: #ffffff;
+    }
+    
+    .mat-mdc-select-arrow {
+      color: #888;
+    }
+  }
+
+  .mat-mdc-radio-group {
+    .mat-mdc-radio-button {
+      .mdc-radio {
+        .mdc-radio__native-control:enabled:checked + .mdc-radio__background .mdc-radio__outer-circle {
+          border-color: #0de47f;
+        }
+
+        .mdc-radio__native-control:enabled:checked + .mdc-radio__background .mdc-radio__inner-circle {
+          border-color: #0de47f;
+        }
+      }
+    }
+  }
+
+  .mat-mdc-datepicker-toggle {
+    color: #888;
+  }
+
+  .mat-mdc-datepicker-content {
+    background: #2a2a2a;
+    color: #ffffff;
+  }
+}

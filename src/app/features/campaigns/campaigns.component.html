@@ -1,0 +1,358 @@
+<!-- Campaigns Page - Split Layout -->
+<div class="campaigns-container">
+  <!-- Left Sidebar - Campaigns List -->
+  <div class="campaigns-sidebar">
+    <div class="sidebar-header">
+      <h2>Campaigns</h2>
+      <button mat-raised-button color="primary" class="create-button" (click)="createCampaign()">
+        <mat-icon>add</mat-icon>
+        Create Campaign
+      </button>
+    </div>
+
+    <div class="search-section">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search campaigns...</mat-label>
+        <input matInput [(ngModel)]="searchTerm" (input)="onSearchChange()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+    </div>
+
+    <div class="campaigns-list">
+      <div class="campaign-item" 
+           *ngFor="let campaign of filteredCampaigns" 
+           [class.selected]="selectedCampaign?.id === campaign.id"
+           (click)="selectCampaign(campaign)">
+        <div class="campaign-info">
+          <div class="campaign-name">{{ campaign.name }}</div>
+          <div class="campaign-description">{{ campaign.description || 'No description' }}</div>
+          <div class="campaign-meta">
+            <span class="status-badge" [ngClass]="'status-' + campaign.status">
+              {{ campaign.status | titlecase }}
+            </span>
+            <span class="contact-count">{{ campaign.contacts?.length || 0 }} contacts</span>
+          </div>
+        </div>
+        <button mat-icon-button class="campaign-menu" (click)="openCampaignMenu(campaign, $event)">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      </div>
+
+      <div class="no-campaigns" *ngIf="!isLoading && filteredCampaigns.length === 0">
+        <mat-icon>campaign</mat-icon>
+        <p>No campaigns found</p>
+      </div>
+
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="24"></mat-spinner>
+        <p>Loading campaigns...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel - Campaign Configuration -->
+  <div class="campaign-config-panel">
+    <div *ngIf="selectedCampaign" class="config-content">
+      <div class="config-header">
+        <div class="campaign-title">
+          <h1>{{ selectedCampaign.name }}</h1>
+          <span class="campaign-id">{{ selectedCampaign.id }}</span>
+        </div>
+        <div class="config-actions">
+          <button mat-icon-button>
+            <mat-icon>content_copy</mat-icon>
+          </button>
+          <button mat-icon-button>
+            <mat-icon>share</mat-icon>
+          </button>
+          <button mat-icon-button>
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+          <button mat-icon-button>
+            <mat-icon>code</mat-icon>
+          </button>
+          <button mat-icon-button>
+            <mat-icon>play_arrow</mat-icon>
+          </button>
+          <button mat-icon-button>
+            <mat-icon>mic</mat-icon>
+          </button>
+          <button mat-raised-button color="primary" class="Publish-button">
+            Publish
+          </button>
+        </div>
+      </div>
+
+      <div class="config-tabs">
+        <button mat-button 
+                *ngFor="let tab of configTabs" 
+                [class.active]="activeTab === tab.id"
+                (click)="setActiveTab(tab.id)">
+          {{ tab.label }}
+        </button>
+      </div>
+
+      <div class="config-content-area">
+        <div *ngIf="activeTab === 'overview'" class="tab-content">
+          <div class="campaign-overview">
+            <div class="overview-section">
+              <h3>Campaign Details</h3>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <label>Status</label>
+                  <span class="status-badge" [ngClass]="'status-' + selectedCampaign.status">
+                    {{ selectedCampaign.status | titlecase }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <label>Assistant</label>
+                  <span>{{ getAssistantName(selectedCampaign.assistant_id) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Phone Number</label>
+                  <span>{{ getPhoneNumberName(selectedCampaign.phone_number_id) }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Schedule Type</label>
+                  <span>{{ selectedCampaign.schedule_type | titlecase }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Created</label>
+                  <span>{{ selectedCampaign.created_at | date:'medium' }}</span>
+                </div>
+                <div class="detail-item">
+                  <label>Contacts</label>
+                  <span>{{ selectedCampaign.contacts?.length || 0 }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="overview-section">
+              <h3>Performance Metrics</h3>
+              <div class="metrics-grid">
+                <div class="metric-card">
+                  <div class="metric-label">Total Calls</div>
+                  <div class="metric-value">{{ campaignStats.totalCalls }}</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Success Rate</div>
+                  <div class="metric-value">{{ campaignStats.successRate }}%</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Avg Duration</div>
+                  <div class="metric-value">{{ campaignStats.avgDuration }}s</div>
+                </div>
+                <div class="metric-card">
+                  <div class="metric-label">Total Cost</div>
+                  <div class="metric-value">${{ campaignStats.totalCost }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="activeTab === 'contacts'" class="tab-content">
+          <div class="contacts-section">
+            <div class="contacts-header">
+              <h3>Campaign Contacts</h3>
+              <button mat-raised-button color="primary" (click)="uploadContacts()">
+                <mat-icon>upload</mat-icon>
+                Upload CSV
+              </button>
+            </div>
+            <div class="contacts-list">
+              <div class="contact-item" *ngFor="let contact of selectedCampaign.contacts">
+                <div class="contact-info">
+                  <div class="contact-name">{{ contact.name || 'Unknown' }}</div>
+                  <div class="contact-phone">{{ contact.phone_number }}</div>
+                </div>
+                <div class="contact-status">
+                  <span class="status-badge" [ngClass]="'status-' + contact.status">
+                    {{ contact.status | titlecase }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="no-contacts" *ngIf="!selectedCampaign.contacts || selectedCampaign.contacts.length === 0">
+                <mat-icon>contacts</mat-icon>
+                <p>No contacts found for this campaign</p>
+                <p class="help-text">Upload a CSV file to add contacts to this campaign</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="activeTab === 'settings'" class="tab-content">
+          <div class="settings-section">
+            <h3>Campaign Settings</h3>
+            <div class="settings-form">
+              <mat-form-field appearance="outline">
+                <mat-label>Max Calls Per Hour</mat-label>
+                <input matInput type="number" [value]="selectedCampaign.max_calls_per_hour" readonly>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Max Retries</mat-label>
+                <input matInput type="number" [value]="selectedCampaign.max_retries" readonly>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Retry Delay (minutes)</mat-label>
+                <input matInput type="number" [value]="selectedCampaign.retry_delay_minutes" readonly>
+              </mat-form-field>
+              
+              <div class="checkbox-field">
+                <mat-checkbox [checked]="selectedCampaign.retry_failed_calls" disabled>
+                  Retry Failed Calls
+                </mat-checkbox>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campaign Form (shown when creating/editing) -->
+    <div *ngIf="isCreatingCampaign" class="campaign-form-container">
+      <div class="form-header">
+        <h2>{{ editingCampaign ? 'Edit Campaign' : 'New Campaign' }}</h2>
+        <button mat-icon-button (click)="cancelCampaignForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+      
+      <form [formGroup]="campaignForm" (ngSubmit)="submitCampaign()" class="campaign-form">
+        <!-- Campaign Name -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Campaign Name*</mat-label>
+          <input matInput formControlName="name" placeholder="Enter campaign name">
+          <mat-error *ngIf="campaignForm.get('name')?.hasError('required')">
+            Campaign name is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Phone Number -->
+        <div class="form-field">
+          <label>Phone Number*</label>
+          <div class="select-wrapper">
+            <mat-select formControlName="phone_number_id" placeholder="Select*">
+              <mat-option *ngFor="let phone of phoneNumbers" [value]="phone.id">
+                {{ phone.phone_number }} - {{ phone.friendly_name }}
+              </mat-option>
+            </mat-select>
+          </div>
+        </div>
+
+        <!-- Information Box -->
+        <div class="info-box">
+          <mat-icon class="info-icon">info</mat-icon>
+          <span>Learn how to avoid spam flagging and optimize your calling strategy for better success rates. 
+            <a href="#" class="info-link">Spam flagging best practices</a>
+          </span>
+        </div>
+
+        <!-- Upload CSV Section -->
+        <div class="upload-section">
+          <div class="upload-header">
+            <label>Upload CSV</label>
+            <a href="#" class="download-template">
+              <mat-icon>download</mat-icon>
+              Download template
+            </a>
+          </div>
+          
+          <div class="upload-area" 
+               [class.dragover]="isDragOver"
+               (dragover)="onDragOver($event)"
+               (dragleave)="onDragLeave($event)"
+               (drop)="onDrop($event)"
+               (click)="fileInput.click()">
+            <input #fileInput type="file" accept=".csv" (change)="onFileSelected($event)" style="display: none;">
+            <mat-icon class="upload-icon">add</mat-icon>
+            <p>Drag and drop a CSV file here or click to select file locally</p>
+            <small>Maximum file size: 5MB</small>
+          </div>
+        </div>
+
+        <!-- Assistant -->
+        <div class="form-field">
+          <label>Assistant*</label>
+          <div class="select-wrapper">
+            <mat-select formControlName="assistant_id" placeholder="Select assistant">
+              <mat-option *ngFor="let assistant of assistants" [value]="assistant.id">
+                {{ assistant.name }}
+              </mat-option>
+            </mat-select>
+          </div>
+        </div>
+
+        <!-- Choose when to send -->
+        <div class="form-field">
+          <label>Choose when to send</label>
+          <div class="radio-group">
+            <mat-radio-group formControlName="schedule_type" class="schedule-options">
+              <mat-radio-button value="NOW" class="schedule-option">
+                <span class="radio-label">Send Now</span>
+              </mat-radio-button>
+              <mat-radio-button value="SCHEDULED" class="schedule-option">
+                <span class="radio-label">Schedule for later</span>
+              </mat-radio-button>
+            </mat-radio-group>
+          </div>
+        </div>
+
+        <!-- CSV Preview -->
+        <div *ngIf="csvData.length > 0" class="csv-preview">
+          <h4>CSV Preview ({{ csvData.length }} contacts)</h4>
+          <div class="csv-table">
+            <table>
+              <thead>
+                <tr>
+                  <th *ngFor="let header of getObjectKeys(csvData[0])">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of csvData.slice(0, 5)">
+                  <td *ngFor="let value of getObjectValues(row)">{{ value }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <p *ngIf="csvData.length > 5" class="more-rows">... and {{ csvData.length - 5 }} more rows</p>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button mat-button type="button" (click)="cancelCampaignForm()">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="isCreating || !campaignForm.valid">
+            <mat-spinner *ngIf="isCreating" diameter="20"></mat-spinner>
+            {{ isCreating ? 'Creating...' : 'Launch Campaign' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- No Selection State -->
+    <div *ngIf="!selectedCampaign && !isCreatingCampaign" class="no-selection">
+      <mat-icon>campaign</mat-icon>
+      <h3>Select a Campaign</h3>
+      <p>Choose a campaign from the list to view and configure its settings</p>
+    </div>
+  </div>
+</div>
+
+<!-- Campaign Menu -->
+<mat-menu #campaignMenu="matMenu">
+  <button mat-menu-item (click)="editCampaign(selectedCampaign)">
+    <mat-icon>edit</mat-icon>
+    <span>Edit</span>
+  </button>
+  <button mat-menu-item (click)="toggleCampaignStatus(selectedCampaign)">
+    <mat-icon>{{ selectedCampaign?.status === 'ACTIVE' ? 'pause' : 'play_arrow' }}</mat-icon>
+    <span>{{ selectedCampaign?.status === 'ACTIVE' ? 'Pause' : 'Resume' }}</span>
+  </button>
+  <button mat-menu-item (click)="deleteCampaign(selectedCampaign)" class="delete-action">
+    <mat-icon>delete</mat-icon>
+    <span>Delete</span>
+  </button>
+</mat-menu>

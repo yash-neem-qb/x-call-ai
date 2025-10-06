@@ -1,0 +1,262 @@
+<!-- Settings Page -->
+<div class="settings-page">
+  <!-- Left Sidebar - Settings Categories -->
+  <aside class="settings-sidebar">
+    <div class="sidebar-header">
+      <div class="settings-title">
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
+      </div>
+    </div>
+
+    <div class="settings-categories">
+      <div *ngFor="let section of getSections()" class="section-group">
+        <h3 class="section-title">{{ section }}</h3>
+        <div class="category-list">
+          <button 
+            *ngFor="let category of getCategoriesForSection(section)"
+            class="category-item"
+            [class.active]="selectedCategory === category.id"
+            (click)="selectCategory(category.id)">
+            <mat-icon>{{ category.icon }}</mat-icon>
+            <span>{{ category.name }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="settings-content">
+    <!-- Organization Settings -->
+    <div *ngIf="selectedCategory === 'org-settings'" class="settings-panel">
+      <div class="panel-header">
+        <div class="org-info">
+          <mat-icon>business</mat-icon>
+          <span>{{ getOrganizationDisplayName() }}</span>
+        </div>
+        <h1 class="panel-title">Organization Settings</h1>
+        <p class="panel-description">Your organization's server and security details.</p>
+      </div>
+
+      <div class="settings-form">
+        <!-- Organization Details -->
+        <div class="form-section">
+          <h3 class="section-title">Organization Details</h3>
+          
+          <div class="form-group">
+            <label class="form-label">Organization Name</label>
+            <input 
+              type="text" 
+              class="form-input readonly"
+              [value]="organizationSettings.organizationName"
+              readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Organization Email</label>
+            <input 
+              type="email" 
+              class="form-input readonly"
+              [value]="organizationSettings.organizationEmail"
+              readonly>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Organization ID</label>
+            <div class="input-with-copy">
+              <input 
+                type="text" 
+                class="form-input readonly"
+                [value]="organizationSettings.organizationId"
+                readonly>
+              <button 
+                class="copy-button"
+                (click)="copyToClipboard(organizationSettings.organizationId, 'Organization ID')">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+          </div>
+
+
+        </div>
+
+        <!-- Delete Organization -->
+        <div class="form-section danger-section">
+          <h3 class="section-title">Delete Organization</h3>
+          <p class="danger-description">Permanently remove your organization and all its contents. This action cannot be undone, so please proceed with caution.</p>
+          
+          <div class="form-group">
+            <label class="form-label">To confirm, please type your organization name: {{ getOrganizationDisplayName() }}</label>
+            <input 
+              type="text" 
+              class="form-input"
+              placeholder="Enter organization name">
+          </div>
+
+          <button class="delete-button" (click)="deleteOrganization()">
+            Delete Organization
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Members Settings -->
+    <div *ngIf="selectedCategory === 'members'" class="settings-panel">
+      <div class="panel-header">
+        <h1 class="panel-title">Members</h1>
+        <button class="invite-button" (click)="inviteMember()">
+          <mat-icon>person_add</mat-icon>
+        </button>
+      </div>
+
+      <div class="members-table-container">
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="isLoadingMembers">
+          <mat-icon class="loading-icon">refresh</mat-icon>
+          <span>Loading members...</span>
+        </div>
+
+        <!-- Members Table -->
+        <div class="members-table" *ngIf="!isLoadingMembers">
+          <div class="table-header">
+            <div class="header-cell email-header">
+              <span>Email</span>
+            </div>
+            <div class="header-cell name-header">
+              <span>Name</span>
+              <mat-icon class="info-icon" matTooltip="Member's display name">help_outline</mat-icon>
+            </div>
+            <div class="header-cell role-header">
+              <span>Role</span>
+              <mat-icon class="info-icon" matTooltip="Member's permission level">admin_panel_settings</mat-icon>
+            </div>
+            <div class="header-cell actions-header">
+              <span>Actions</span>
+            </div>
+          </div>
+
+          <div class="table-body">
+            <div class="table-row" *ngFor="let member of members">
+              <div class="table-cell email-cell">
+                <span class="member-email">{{ member.email }}</span>
+              </div>
+              <div class="table-cell name-cell">
+                <span class="member-name" *ngIf="member.name; else noName">{{ member.name }}</span>
+                <ng-template #noName>
+                  <span class="no-name">—</span>
+                </ng-template>
+              </div>
+              <div class="table-cell role-cell">
+                <span class="member-role" [class.admin]="member.role === 'Admin'">{{ member.role }}</span>
+              </div>
+              <div class="table-cell actions-cell">
+                <button class="action-button" (click)="updateMemberRole(member, 'Member')" *ngIf="member.role === 'Admin'">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button class="action-button danger" (click)="removeMember(member)" *ngIf="member.role !== 'Admin'">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" *ngIf="!isLoadingMembers && members.length === 0">
+          <mat-icon>group</mat-icon>
+          <h3>No members found</h3>
+          <p>Invite team members to collaborate on your organization.</p>
+          <button class="invite-button-large" (click)="inviteMember()">
+            <mat-icon>person_add</mat-icon>
+            <span>Invite Member</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Settings -->
+    <div *ngIf="selectedCategory === 'profile'" class="settings-panel">
+      <div class="panel-header">
+        <div class="account-header">
+          <mat-icon>person</mat-icon>
+          <h1 class="panel-title">Account</h1>
+        </div>
+      </div>
+
+      <div class="account-sections">
+        <!-- Settings Section -->
+        <div class="account-section">
+          <h3 class="section-title">Settings</h3>
+          <p class="section-description">Customize your account details.</p>
+          
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input 
+              type="email" 
+              [(ngModel)]="userProfile.email" 
+              class="form-input readonly"
+              readonly
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">New Password</label>
+            <input 
+              type="password" 
+              [(ngModel)]="newPassword" 
+              placeholder="Enter new password"
+              class="form-input"
+            >
+          </div>
+
+          <div class="form-actions">
+            <button class="update-password-button" (click)="updatePassword()">
+              Update New Password
+            </button>
+          </div>
+        </div>
+
+        <!-- Delete Account Section -->
+        <div class="account-section danger-section">
+          <h3 class="section-title danger-title">Delete Account</h3>
+          <p class="danger-description">
+            Permanently remove your account and all its contents. Upon deletion of your account, 
+            any orgs without any members will be deleted immediately. Neither the account, 
+            nor the orgs will be recoverable. Proceed with caution.
+          </p>
+          
+          <div class="form-group">
+            <label class="form-label">To confirm, please type your email address: {{ userProfile.email }}</label>
+            <input 
+              type="text" 
+              [(ngModel)]="deleteConfirmationEmail" 
+              placeholder="Enter your email"
+              class="form-input"
+            >
+          </div>
+
+          <div class="form-actions">
+            <button class="delete-account-button" (click)="deleteAccount()">
+              Delete Account
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Other Settings Categories -->
+    <div *ngIf="selectedCategory !== 'org-settings' && selectedCategory !== 'members' && selectedCategory !== 'profile'" class="settings-panel">
+      <div class="panel-header">
+        <h1 class="panel-title">{{ getSettingsCategoryName() }}</h1>
+        <p class="panel-description">Settings for {{ getSettingsCategoryName() }}.</p>
+      </div>
+
+      <div class="coming-soon">
+        <mat-icon>construction</mat-icon>
+        <h3>Coming Soon</h3>
+        <p>This settings section is under development.</p>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,181 @@
+<!-- Dashboard content -->
+<div class="dashboard-content">
+  <header class="page-header">
+    <div class="header-left">
+      <div class="org-info">
+        <span class="org-name">{{ selectedOrg?.organization_name || 'My Organization' }}</span>
+        <span class="user-welcome">Welcome {{ currentUser?.email || 'User' }}</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button mat-button class="header-button">
+        <mat-icon>description</mat-icon>
+        <span>Docs</span>
+      </button>
+      <button mat-button class="header-button">
+        <mat-icon>chat</mat-icon>
+        <span>Discord</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Metrics Section -->
+  <div class="metrics-section">
+    <div class="metrics-header">
+      <h2 class="metrics-title">Metrics</h2>
+      <div class="metrics-filters">
+        <mat-select class="filter-select" [(value)]="selectedAssistant" (selectionChange)="onFilterChange()" placeholder="All Assistants">
+          <mat-option value="all">All Assistants</mat-option>
+          <mat-option *ngFor="let assistant of assistants" [value]="assistant.id">{{ assistant.name }}</mat-option>
+        </mat-select>
+        <mat-select class="filter-select" [(value)]="selectedPeriod" (selectionChange)="onFilterChange()" placeholder="Last Month">
+          <mat-option value="7">Last Week</mat-option>
+          <mat-option value="30">Last Month</mat-option>
+          <mat-option value="90">Last 3 Months</mat-option>
+        </mat-select>
+      </div>
+    </div>
+    
+    <div class="metrics-grid" *ngIf="dashboardData">
+      <div class="metric-card">
+        <div class="metric-title">Number of Calls</div>
+        <div class="metric-value">{{ dashboardData.overview?.total_calls || 0 }}</div>
+        <div class="metric-trend" [class.positive]="callTrend >= 0" [class.negative]="callTrend < 0">
+          <mat-icon>{{ callTrend >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span>{{ Math.abs(callTrend) }}%</span>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-title">Avg Duration</div>
+        <div class="metric-value">{{ formatDuration(dashboardData.duration_metrics?.average_duration_seconds || 0) }}</div>
+        <div class="metric-trend" [class.neutral]="true">
+          <mat-icon>remove</mat-icon>
+          <span>0.0%</span>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-title">Total Cost</div>
+        <div class="metric-value">{{ (dashboardData.cost_metrics?.total_cost_usd || 0).toFixed(2) }} credits</div>
+        <div class="metric-trend" [class.positive]="costTrend >= 0" [class.negative]="costTrend < 0">
+          <mat-icon>{{ costTrend >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+          <span>{{ Math.abs(costTrend) }}%</span>
+        </div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-title">Avg Cost</div>
+        <div class="metric-value">{{ (dashboardData.cost_metrics?.average_cost_usd || 0).toFixed(2) }} cr/call</div>
+        <div class="metric-trend" [class.neutral]="true">
+          <mat-icon>remove</mat-icon>
+          <span>0.0%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+      
+  <!-- Call Success Section -->
+  <div class="call-success-section">
+    <h2 class="section-title">Call Success</h2>
+    <div class="success-metrics">
+      <div class="success-rate">
+        <span class="success-percentage">{{ (dashboardData?.overview?.success_rate || 0).toFixed(0) }}%</span>
+        <div class="success-trend" [class.positive]="successTrend >= 0" [class.negative]="successTrend < 0">
+          <span>{{ successTrend >= 0 ? '+' : '' }}{{ successTrend.toFixed(1) }}% Compared to previous period</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chart placeholder - you can integrate with Chart.js, D3, or any charting library -->
+    <div class="chart-container">
+      <div class="chart-placeholder">
+        <div class="chart-title">Call Success</div>
+        <div class="chart-content">
+          <!-- This would be replaced with an actual chart component -->
+          <div class="chart-line" [style.height]="(dashboardData?.overview?.success_rate || 0) + '%'"></div>
+        </div>
+        <div class="chart-axis">
+          <div class="x-axis">
+            <span>Sep 4</span>
+            <span>Sep 6</span>
+            <span>Sep 8</span>
+            <span>Sep 10</span>
+            <span>Sep 12</span>
+            <span>Sep 14</span>
+            <span>Sep 16</span>
+            <span>Sep 18</span>
+            <span>Sep 20</span>
+            <span>Sep 22</span>
+            <span>Sep 24</span>
+            <span>Sep 26</span>
+            <span>Sep 28</span>
+            <span>Sep 30</span>
+            <span>Oct 2</span>
+            <span>Oct 4</span>
+          </div>
+          <div class="y-axis">
+            <span>100</span>
+            <span>75</span>
+            <span>50</span>
+            <span>25</span>
+            <span>0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity Section -->
+  <div class="section">
+    <div class="section-header">
+      <h2 class="section-title">Recent Activity</h2>
+      <button mat-stroked-button class="view-all-button" (click)="viewCalls()">
+        <span>View All</span>
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+    
+    <div class="activity-empty" *ngIf="!recentCalls || recentCalls.length === 0">
+      <mat-icon>history</mat-icon>
+      <p>No recent activity</p>
+      <span>Your recent calls and interactions will appear here</span>
+    </div>
+    
+    <div class="activity-list" *ngIf="recentCalls && recentCalls.length > 0">
+      <div class="activity-item" *ngFor="let call of recentCalls">
+        <div class="activity-icon" [class.success]="call.success" [class.failed]="!call.success">
+          <mat-icon>{{ call.success ? 'call' : 'call_end' }}</mat-icon>
+        </div>
+        <div class="activity-details">
+          <div class="activity-title">
+            <span class="activity-name">{{ call.assistant_name }}</span>
+            <span class="activity-time">{{ formatTime(call.start_time) }}</span>
+          </div>
+          <div class="activity-meta">
+            <span class="activity-duration">{{ formatDuration(call.duration) }}</span>
+            <span class="activity-status" [class.success]="call.success" [class.failed]="!call.success">
+              {{ call.success ? 'Successful' : 'Failed' }}
+            </span>
+            </div>
+          </div>
+        <button mat-icon-button class="activity-action">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        </div>
+      </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading-state" *ngIf="isLoading">
+        <div class="spinner"></div>
+    <p>Loading dashboard...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" *ngIf="error">
+        <mat-icon>error_outline</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button (click)="loadDashboard()">Try Again</button>
+  </div>
+</div>

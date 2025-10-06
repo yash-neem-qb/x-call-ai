@@ -1,0 +1,153 @@
+<!-- Campaign Form Dialog -->
+<div class="campaign-form-dialog">
+  <div class="dialog-header">
+    <button mat-icon-button class="back-button" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h2 mat-dialog-title>New campaign</h2>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <form [formGroup]="campaignForm" class="campaign-form">
+      <!-- Campaign Name -->
+      <div class="form-section">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Campaign Name</mat-label>
+          <input matInput formControlName="name" placeholder="Campaign Name">
+          <mat-error *ngIf="campaignForm.get('name')?.hasError('required')">
+            Campaign name is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Phone Number -->
+      <div class="form-section">
+        <div class="field-header">
+          <label class="field-label">Phone Number</label>
+          <mat-icon class="info-icon">info</mat-icon>
+        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select</mat-label>
+          <mat-select formControlName="phone_number_id">
+            <mat-option *ngFor="let phone of data.phoneNumbers" [value]="phone.id">
+              {{ phone.phone_number }} ({{ phone.friendly_name || 'No name' }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="campaignForm.get('phone_number_id')?.hasError('required')">
+            Phone number is required
+          </mat-error>
+        </mat-form-field>
+        
+        <!-- Best Practices Info Box -->
+        <div class="info-box">
+          <mat-icon class="info-icon">info</mat-icon>
+          <div class="info-content">
+            <p>Learn how to avoid spam flagging and optimize your calling strategy for better success rates. 
+              <a href="#" class="info-link">Spam flagging best practices</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload CSV -->
+      <div class="form-section">
+        <div class="field-header">
+          <label class="field-label">Upload CSV</label>
+          <button mat-button type="button" class="template-button" (click)="downloadTemplate()">
+            <mat-icon>download</mat-icon>
+            Download template
+          </button>
+        </div>
+        
+        <div class="upload-area" 
+             (click)="fileInput.click()" 
+             (dragover)="onDragOver($event)" 
+             (drop)="onDrop($event)"
+             [class.dragover]="isDragOver">
+          <input #fileInput type="file" accept=".csv" (change)="onFileSelected($event)" style="display: none;">
+          <mat-icon class="upload-icon">add</mat-icon>
+          <p class="upload-text">Drag and drop a CSV file here or click to select file locally</p>
+          <small class="upload-limit">Maximum file size: 5MB</small>
+        </div>
+
+        <!-- CSV Preview -->
+        <div class="csv-preview" *ngIf="csvData.length > 0">
+          <h4>CSV Preview (first 5 rows)</h4>
+          <div class="preview-table">
+            <table>
+              <thead>
+                <tr>
+                  <th *ngFor="let header of getObjectKeys(csvData[0])">{{ header }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of csvData.slice(0, 5)">
+                  <td *ngFor="let value of getObjectValues(row)">{{ value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="preview-info">Total rows: {{ csvData.length }}</p>
+        </div>
+      </div>
+
+      <!-- Assistant -->
+      <div class="form-section">
+        <label class="field-label">Assistant</label>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Select</mat-label>
+          <mat-select formControlName="assistant_id">
+            <mat-option *ngFor="let assistant of data.assistants" [value]="assistant.id">
+              {{ assistant.name }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="campaignForm.get('assistant_id')?.hasError('required')">
+            Assistant is required
+          </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- Choose when to send -->
+      <div class="form-section">
+        <label class="field-label">Choose when to send</label>
+        <div class="schedule-options">
+          <mat-radio-group formControlName="schedule_type" class="radio-group">
+            <div class="radio-option" [class.selected]="campaignForm.get('schedule_type')?.value === 'NOW'">
+              <mat-radio-button value="NOW" class="radio-button">
+                <div class="option-content">
+                  <div class="option-title">Send Now</div>
+                </div>
+              </mat-radio-button>
+            </div>
+            <div class="radio-option" [class.selected]="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
+              <mat-radio-button value="SCHEDULED" class="radio-button">
+                <div class="option-content">
+                  <div class="option-title">Schedule for later</div>
+                </div>
+              </mat-radio-button>
+            </div>
+          </mat-radio-group>
+
+          <mat-form-field appearance="outline" 
+                          class="full-width schedule-field" 
+                          *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
+            <mat-label>Schedule Date & Time</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="scheduled_at">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </mat-form-field>
+        </div>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-raised-button color="primary" class="launch-button" (click)="createCampaign()" [disabled]="isCreating || !campaignForm.valid">
+      <mat-spinner *ngIf="isCreating" diameter="20"></mat-spinner>
+      {{ isCreating ? 'Creating...' : 'Launch campaign' }}
+    </button>
+  </mat-dialog-actions>
+</div>

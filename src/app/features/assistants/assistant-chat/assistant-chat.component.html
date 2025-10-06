@@ -1,0 +1,100 @@
+<div class="call-interface">
+  <!-- Professional Header -->
+  <div class="header">
+    <div class="assistant-info">
+      <div class="assistant-avatar">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+      <div class="assistant-details">
+        <h2 class="assistant-name">{{ assistant?.name || 'AI Assistant' }}</h2>
+        <div class="connection-status">
+          <span class="status-dot" 
+                [class.connected]="isConnected"
+                [class.connecting]="isConnecting">
+          </span>
+          <span class="status-text">
+            <span *ngIf="isConnecting">Connecting...</span>
+            <span *ngIf="isConnected">Connected</span>
+            <span *ngIf="!isConnected && !isConnecting">Disconnected</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="call-timer" *ngIf="isConnected">
+      <mat-icon class="timer-icon">access_time</mat-icon>
+      <span class="timer-text">{{ callDuration }}</span>
+    </div>
+  </div>
+
+  <!-- Chat Messages Area -->
+  <div class="chat-container">
+    <div class="chat-messages" #chatContainer *ngIf="isConnected">
+      <!-- Chat Messages -->
+      <div class="message-wrapper" 
+           *ngFor="let message of chatMessages; trackBy: trackByMessageId"
+           [class.user-wrapper]="message.type === 'user'"
+           [class.assistant-wrapper]="message.type === 'assistant'">
+        
+        <!-- Assistant Message (Left) -->
+        <div class="message assistant-message" *ngIf="message.type === 'assistant'">
+          <div class="message-label">Assistant</div>
+          <div class="message-bubble">
+            <div class="message-text" [innerHTML]="message.content"></div>
+          </div>
+        </div>
+        
+        <!-- User Message (Right) -->
+        <div class="message user-message" *ngIf="message.type === 'user'">
+          <div class="message-label">User</div>
+          <div class="message-bubble">
+            <div class="message-text" [innerHTML]="message.content"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="message-wrapper assistant-wrapper" *ngIf="currentAssistantMessage?.isStreaming">
+        <div class="message assistant-message">
+          <div class="message-label">Assistant</div>
+          <div class="message-bubble">
+            <div class="message-text">
+              {{ currentAssistantMessage.content }}
+              <span class="typing-indicator">●</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disconnected State -->
+    <div class="disconnected-state" *ngIf="!isConnected && !isConnecting">
+      <div class="disconnected-icon">
+        <mat-icon>call_end</mat-icon>
+      </div>
+      <h3>Call Ended</h3>
+      <p>Connection has been terminated</p>
+    </div>
+  </div>
+
+  <!-- Call Controls -->
+  <div class="call-controls">
+    <button class="control-button mute-button" 
+            [class.muted]="isMuted"
+            (click)="toggleMute()"
+            [disabled]="!isConnected">
+      <mat-icon class="button-icon">
+        <span *ngIf="!isMuted">mic</span>
+        <span *ngIf="isMuted">mic_off</span>
+      </mat-icon>
+      <span class="button-label">{{ isMuted ? 'Unmute' : 'Mute' }}</span>
+    </button>
+    
+    <button class="control-button end-call-button" 
+            (click)="endCall()"
+            [disabled]="!isConnected">
+      <mat-icon class="button-icon">call_end</mat-icon>
+      <span class="button-label">End Call</span>
+    </button>
+  </div>
+</div>
