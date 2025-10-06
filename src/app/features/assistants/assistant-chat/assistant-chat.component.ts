@@ -56,6 +56,12 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   private audioStream: MediaStream | null = null;
   private isStreaming = false;
   
+  // Audio queue system - prevents overlapping audio chunks
+  // Each audio chunk is queued and played sequentially to avoid audio overlap
+  private audioQueue: Array<{data: string, format: string}> = [];
+  private isPlayingAudio = false;
+  private currentAudioSource: AudioBufferSourceNode | null = null;
+  
   // Call duration timer
   private callStartTime: Date | null = null;
   private durationInterval: any = null;
@@ -244,6 +250,9 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     this.stopRecording();
     this.stopCallTimer();
     this.webrtcService.disconnect();
+    
+    // Clear audio queue and stop any playing audio
+    this.clearAudioQueue();
     
     // Close audio contexts
     if (this.audioContext) {
@@ -498,76 +507,179 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
 
   /**
-   * Play audio response from assistant
+   * Play audio response from assistant (queued)
    */
   private async playAudioResponse(base64Audio: string, format: string = 'pcm_16000'): Promise<void> {
-    try {
-      // Try the main method first
-      await this.playAudioWithWebAudio(base64Audio, format);
-      
-    } catch (error) {
-      console.error('🎵 Web Audio playback failed, trying fallback:', error);
-      // Try fallback method
-      await this.playAudioWithFallback(base64Audio, format);
+    // Validate audio data
+    if (!base64Audio || base64Audio.length === 0) {
+      console.warn('🎵 Empty audio data received, skipping');
+      return;
+    }
+
+    // Add audio to queue
+    this.audioQueue.push({ data: base64Audio, format });
+    console.log(`🎵 Audio chunk queued. Queue length: ${this.audioQueue.length}`);
+    
+    // Start processing queue if not already playing
+    if (!this.isPlayingAudio) {
+      this.processAudioQueue();
     }
   }
 
+  /**
+   * Process audio queue sequentially
+   */
+  private async processAudioQueue(): Promise<void> {
+    if (this.audioQueue.length === 0) {
+      this.isPlayingAudio = false;
+      return;
+    }
+
+    this.isPlayingAudio = true;
+    const audioItem = this.audioQueue.shift();
+    
+    if (!audioItem) {
+      this.isPlayingAudio = false;
+      return;
+    }
+
+    try {
+      console.log(`🎵 Playing audio chunk. Remaining in queue: ${this.audioQueue.length}`);
+      
+      // Play audio and wait for it to complete
+      await this.playAudioWithWebAudio(audioItem.data, audioItem.format);
+      
+      // Audio finished, process next item in queue
+      this.processAudioQueue();
+      
+    } catch (error) {
+      console.error('🎵 Web Audio playback failed, trying fallback:', error);
+      try {
+        await this.playAudioWithFallback(audioItem.data, audioItem.format);
+        // Fallback finished, process next item
+        this.processAudioQueue();
+      } catch (fallbackError) {
+        console.error('🎵 Fallback audio also failed:', fallbackError);
+        // Continue to next audio even if this one failed
+        this.processAudioQueue();
+      }
+    }
+  }
+
+  /**
+   * Clear audio queue and stop any currently playing audio
+   */
+  private clearAudioQueue(): void {
+    console.log('🎵 Clearing audio queue and stopping playback');
+    
+    // Stop any currently playing audio
+    if (this.currentAudioSource) {
+      try {
+        this.currentAudioSource.stop();
+      } catch (e) {
+        // Audio source might already be stopped
+      }
+      this.currentAudioSource = null;
+    }
+    
+    // Clear the queue
+    this.audioQueue = [];
+    this.isPlayingAudio = false;
+  }
+
+  /**
+   * Get current audio queue status (for debugging)
+   */
+  getAudioQueueStatus(): { queueLength: number, isPlaying: boolean } {
+    return {
+      queueLength: this.audioQueue.length,
+      isPlaying: this.isPlayingAudio
+    };
+  }
+
   private async playAudioWithWebAudio(base64Audio: string, format: string): Promise<void> {
-    // Ensure playback audio context is properly initialized
-    if (!this.playbackAudioContext) {
-      await this.initializeAudioContexts();
-    }
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Ensure playback audio context is properly initialized
+        if (!this.playbackAudioContext) {
+          await this.initializeAudioContexts();
+        }
 
-    // Always resume playback context before playing audio
-    if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
-      console.log('🎵 Playback audio context suspended, resuming...');
-      await this.playbackAudioContext.resume();
-      console.log('🎵 Playback audio context resumed, state:', this.playbackAudioContext.state);
-    }
+        // Always resume playback context before playing audio
+        if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
+          console.log('🎵 Playback audio context suspended, resuming...');
+          await this.playbackAudioContext.resume();
+          console.log('🎵 Playback audio context resumed, state:', this.playbackAudioContext.state);
+        }
 
-      // Decode base64 to bytes
-      const audioData = atob(base64Audio);
-      const audioBytes = new Uint8Array(audioData.length);
-      for (let i = 0; i < audioData.length; i++) {
-        audioBytes[i] = audioData.charCodeAt(i);
+        // Stop any currently playing audio
+        if (this.currentAudioSource) {
+          try {
+            this.currentAudioSource.stop();
+          } catch (e) {
+            // Audio source might already be stopped
+          }
+          this.currentAudioSource = null;
+        }
+
+        // Decode base64 to bytes
+        const audioData = atob(base64Audio);
+        const audioBytes = new Uint8Array(audioData.length);
+        for (let i = 0; i < audioData.length; i++) {
+          audioBytes[i] = audioData.charCodeAt(i);
+        }
+        
+        let pcmData: Float32Array;
+        let sampleRate: number;
+        
+        if (format === 'pcm_16000') {
+          // Handle PCM 16kHz format (browser-friendly)
+          pcmData = this.decodePCM16(audioBytes);
+          sampleRate = 16000;
+        } else if (format === 'ulaw_8000') {
+          // Handle μ-law 8kHz format (legacy/Twilio)
+          pcmData = this.decodeULaw(audioBytes);
+          sampleRate = 8000;
+        } else {
+          throw new Error(`Unsupported audio format: ${format}`);
+        }
+        
+        // Create audio buffer using playback audio context
+        const audioBuffer = this.playbackAudioContext.createBuffer(1, pcmData.length, sampleRate);
+        const channelData = audioBuffer.getChannelData(0);
+        channelData.set(pcmData);
+        
+        // Play the audio with proper gain control using playback audio context
+        const source = this.playbackAudioContext.createBufferSource();
+        const gainNode = this.playbackAudioContext.createGain();
+        
+        // Set volume to maximum (1.0)
+        gainNode.gain.setValueAtTime(1.0, this.playbackAudioContext.currentTime);
+        
+        // Connect audio graph: source -> gain -> destination
+        source.buffer = audioBuffer;
+        source.connect(gainNode);
+        gainNode.connect(this.playbackAudioContext.destination);
+        
+        // Store current audio source for potential stopping
+        this.currentAudioSource = source;
+        
+        // Set up event handlers
+        source.onended = () => {
+          console.log('🎵 Audio chunk finished playing');
+          this.currentAudioSource = null;
+          resolve(); // Resolve promise when audio finishes
+        };
+        
+        // Start playback immediately
+        source.start(0);
+        
+      } catch (error) {
+        console.error('🎵 Error in playAudioWithWebAudio:', error);
+        this.currentAudioSource = null;
+        reject(error);
       }
-      
-      let pcmData: Float32Array;
-      let sampleRate: number;
-      
-      if (format === 'pcm_16000') {
-        // Handle PCM 16kHz format (browser-friendly)
-        pcmData = this.decodePCM16(audioBytes);
-        sampleRate = 16000;
-      } else if (format === 'ulaw_8000') {
-        // Handle μ-law 8kHz format (legacy/Twilio)
-        pcmData = this.decodeULaw(audioBytes);
-        sampleRate = 8000;
-      } else {
-        throw new Error(`Unsupported audio format: ${format}`);
-      }
-      
-      // Create audio buffer using playback audio context
-      const audioBuffer = this.playbackAudioContext.createBuffer(1, pcmData.length, sampleRate);
-      const channelData = audioBuffer.getChannelData(0);
-      channelData.set(pcmData);
-      
-      
-      // Play the audio with proper gain control using playback audio context
-      const source = this.playbackAudioContext.createBufferSource();
-      const gainNode = this.playbackAudioContext.createGain();
-      
-      // Set volume to maximum (1.0)
-      gainNode.gain.setValueAtTime(1.0, this.playbackAudioContext.currentTime);
-      
-      // Connect audio graph: source -> gain -> destination
-      source.buffer = audioBuffer;
-      source.connect(gainNode);
-      gainNode.connect(this.playbackAudioContext.destination);
-      
-      // Start playback immediately
-      source.start(0);
-
+    });
   }
 
   private async playAudioWithFallback(base64Audio: string, format: string): Promise<void> {
@@ -635,6 +747,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    * Hang up the call
    */
   hangup(): void {
+    this.clearAudioQueue(); // Clear any pending audio
     this.webrtcService.disconnect();
     this.dialogRef.close();
   }
@@ -781,6 +894,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   }
 
   endCall(): void {
+    this.clearAudioQueue(); // Clear any pending audio
     this.webrtcService.disconnect();
     this.dialogRef.close();
   }
