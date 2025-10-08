@@ -465,12 +465,14 @@
   align-items: center;
   justify-content: center;
   color: #8a8f9d;
+  padding: 40px 20px;
   
   mat-icon {
     font-size: 64px;
     width: 64px;
     height: 64px;
     margin-bottom: 24px;
+    opacity: 0.6;
   }
   
   h3 {
@@ -482,7 +484,45 @@
   
   p {
     font-size: 14px;
-    margin: 0;
+    margin: 0 0 32px 0;
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+  
+  button {
+    background-color: #0de47f;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 160px;
+    justify-content: center;
+    
+    &:hover {
+      background-color: #0bc46b;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(13, 228, 127, 0.3);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+    
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      opacity: 1;
+    }
   }
 }
 
