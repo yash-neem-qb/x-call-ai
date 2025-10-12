@@ -1,0 +1,149 @@
+<!-- Main app layout with sidebar -->
+<div class="app-layout">
+  <!-- Left sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <button class="user-org" [matMenuTriggerFor]="orgMenu">
+        <div class="user-avatar">
+          <span class="user-initial">{{ getUserInitial() }}</span>
+        </div>
+        <div class="user-info">
+          <span class="org-name">{{ getOrganizationDisplayName() }}</span>
+          <span class="user-email">{{ getUserEmail() }}</span>
+        </div>
+        <mat-icon class="dropdown-icon">expand_more</mat-icon>
+      </button>
+      
+      <mat-menu #orgMenu="matMenu" class="org-dropdown-menu">
+        <!-- Current User/Org Header -->
+        <div class="menu-header">
+          <div class="menu-user-info">
+            <div class="menu-avatar">
+              <span class="menu-initial">{{ getUserInitial() }}</span>
+            </div>
+            <div class="menu-details">
+              <div class="menu-name">{{ getOrganizationDisplayName() }}</div>
+              <div class="menu-email">{{ getUserEmail() }}</div>
+            </div>
+          </div>
+        </div>
+        
+        <mat-divider></mat-divider>
+        
+         <!-- Organization Switcher Section -->
+         <div class="org-switcher-section">
+           <div class="section-title">SWITCH ORGANIZATION</div>
+           <button mat-menu-item class="switch-org-button" (click)="navigateToSwitchOrg()">
+             <mat-icon>business</mat-icon>
+             <span>Switch Organization</span>
+             <mat-icon class="arrow-icon">chevron_right</mat-icon>
+           </button>
+         </div>
+        
+        <mat-divider></mat-divider>
+        
+        <!-- User Menu Section -->
+        <button mat-menu-item class="menu-item" (click)="navigateToAccountSettings()">
+          <mat-icon>person</mat-icon>
+          <span>Account settings</span>
+        </button>
+        
+         <button mat-menu-item class="menu-item" (click)="navigateToSettings()">
+           <mat-icon>settings</mat-icon>
+           <span>Settings</span>
+         </button>
+        
+        <button mat-menu-item class="menu-item">
+          <mat-icon>newspaper</mat-icon>
+          <span>What's new</span>
+          <mat-icon class="arrow-icon">chevron_right</mat-icon>
+        </button>
+        
+        <button mat-menu-item class="menu-item">
+          <mat-icon>help</mat-icon>
+          <span>Help</span>
+          <mat-icon class="arrow-icon">chevron_right</mat-icon>
+        </button>
+        
+        <mat-divider></mat-divider>
+        
+        <button mat-menu-item class="menu-item logout-item" (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Sign out</span>
+        </button>
+      </mat-menu>
+    </div>
+    
+    <div class="search-container">
+      <div class="search-box">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="Search" class="search-input">
+        <div class="keyboard-shortcut">⌘ K</div>
+      </div>
+    </div>
+    
+    <nav class="sidebar-nav">
+      <div class="nav-item" routerLinkActive="active">
+        <a class="nav-link" routerLink="/dashboard">
+          <mat-icon>home</mat-icon>
+          <span>Overview</span>
+        </a>
+      </div>
+      
+      <div class="nav-section">
+        <h3 class="nav-section-title">BUILD</h3>
+        <div class="nav-item" routerLinkActive="active">
+          <a class="nav-link" routerLink="/assistants">
+            <mat-icon>smart_toy</mat-icon>
+            <span>Assistants</span>
+          </a>
+        </div>
+        <div class="nav-item" routerLinkActive="active">
+          <a class="nav-link" routerLink="/campaigns">
+            <mat-icon>campaign</mat-icon>
+            <span>Campaigns</span>
+          </a>
+        </div>
+        <div class="nav-item" routerLinkActive="active">
+          <a class="nav-link" routerLink="/phone-numbers">
+            <mat-icon>phone</mat-icon>
+            <span>Phone Numbers</span>
+          </a>
+        </div>
+        <div class="nav-item" routerLinkActive="active">
+          <a class="nav-link" routerLink="/knowledge-base">
+            <mat-icon>folder_open</mat-icon>
+            <span>Knowledge Base</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <h3 class="nav-section-title">OBSERVE</h3>
+        <div class="nav-item" routerLinkActive="active">
+          <a class="nav-link" routerLink="/call-logs">
+            <mat-icon>description</mat-icon>
+            <span>Call Logs</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <div class="credits-container">
+          <span class="credits-label">PAYG</span>
+          <span class="credits-amount">2.86 Credits</span>
+        </div>
+        <button mat-button class="buy-credits-btn">
+          <mat-icon>add</mat-icon>
+          Buy Credits
+        </button>
+      </div>
+    </nav>
+  </aside>
+  
+  <!-- Content area -->
+  <div class="content-area">
+    <!-- Router outlet for page content -->
+    <router-outlet></router-outlet>
+  </div>
+</div>

@@ -1,0 +1,457 @@
+<!-- Assistants page content -->
+<div class="assistants-page">
+  <!-- Middle column: Assistants list -->
+  <div class="assistants-column">
+    <div class="assistants-header">
+      <h1>Assistants</h1>
+      <button mat-flat-button color="primary" class="create-button" (click)="createAssistant()">
+        <mat-icon>add</mat-icon>
+        Create Assistant
+      </button>
+    </div>
+
+    <div class="search-box">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Search assistants..." class="search-input">
+    </div>
+    
+    <div class="assistants-list" *ngIf="!isLoading && !error">
+      <div class="assistant-item" *ngFor="let assistant of assistants" 
+           [class.active]="selectedAssistant?.id === assistant.id"
+           (click)="selectAssistant(assistant)">
+        <div class="assistant-info">
+          <div class="assistant-name">{{ assistant.name }}</div>
+          <div class="assistant-meta">{{ (assistant.model?.provider || '—') | lowercase }} / {{ assistant.model?.model || '—' }}</div>
+        </div>
+        <div class="assistant-actions">
+          <button mat-icon-button [matMenuTriggerFor]="assistantMenu" (click)="$event.stopPropagation()">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #assistantMenu="matMenu">
+            <button mat-menu-item (click)="editAssistant(assistant)">
+              <mat-icon>edit</mat-icon>
+              <span>Edit</span>
+            </button>
+            <button mat-menu-item (click)="deleteAssistant(assistant)">
+              <mat-icon>delete</mat-icon>
+              <span>Delete</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="assistants.length === 0 && !isLoading && !error">
+      <mat-icon>smart_toy</mat-icon>
+      <p>No assistants found</p>
+    </div>
+    
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      <p>Loading assistants...</p>
+    </div>
+    
+    <!-- Error State -->
+    <div class="error-state" *ngIf="error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-button (click)="loadAssistants()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- Right column: assistant detail -->
+  <div class="content-column">
+    <ng-container *ngIf="selectedAssistant || isCreating; else emptyState">
+      <div class="assistant-detail-panel">
+        <header class="assistant-header">
+          <div class="title-group">
+            <h1 class="assistant-title">{{ isCreating ? 'New Assistant' : selectedAssistant?.name }}</h1>
+            <div class="assistant-meta" *ngIf="!isCreating && selectedAssistant">
+              <span class="assistant-id">{{ selectedAssistant.id }}</span>
+              <button mat-icon-button matTooltip="Copy ID" (click)="copyAssistantId()">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button mat-icon-button matTooltip="Open in new window" (click)="openAssistantInNewTab()">
+                <mat-icon>open_in_new</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="header-controls">
+            <button class="chip-action" mat-stroked-button (click)="toggleCodePanel()" [class.active]="showCodePanel">
+              <mat-icon>code</mat-icon>
+              <span>Code</span>
+            </button>
+            <button class="chip-action primary" mat-flat-button color="primary" (click)="!isCreating && selectedAssistant ? openChatDialog(selectedAssistant) : null">
+              <mat-icon>mic</mat-icon>
+              <span>Talk to Assistant</span>
+            </button>
+            <button class="Publish-button" mat-flat-button color="primary" (click)="PublishAssistant()">
+              <span>Publish</span>
+            </button>
+          </div>
+        </header>
+
+        <nav class="tab-navigation">
+          <button class="tab-button" [class.active]="activeTab === 'model'" (click)="setActiveTab('model')">Model</button>
+          <button class="tab-button" [class.active]="activeTab === 'voice'" (click)="setActiveTab('voice')">Voice</button>
+          <button class="tab-button" [class.active]="activeTab === 'transcriber'" (click)="setActiveTab('transcriber')">Transcriber</button>
+          <button class="tab-button" [class.active]="activeTab === 'tools'" (click)="setActiveTab('tools')">Tools</button>
+          <button class="tab-button" [class.active]="activeTab === 'analysis'" (click)="setActiveTab('analysis')">Analysis</button>
+          <button class="tab-button" [class.active]="activeTab === 'advanced'" (click)="setActiveTab('advanced')">Advanced</button>
+          <button class="tab-button" [class.active]="activeTab === 'widget'" (click)="setActiveTab('widget')">Widget</button>
+        </nav>
+
+        <div class="tab-content" [ngSwitch]="activeTab">
+          <section class="panel" *ngSwitchCase="'model'">
+            
+            <!-- Cost and Latency indicators -->
+            <div class="metrics-row">
+              <div class="metric-box">
+                <div class="metric-label">
+                  <span>Cost</span>
+                  <mat-icon>info_outline</mat-icon>
+                </div>
+                <div class="metric-value">~$0.12 /min</div>
+                <div class="metric-bar">
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 40%;"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="metric-box">
+                <div class="metric-label">
+                  <span>Latency</span>
+                  <mat-icon>info_outline</mat-icon>
+                </div>
+                <div class="metric-value">~875 ms</div>
+                <div class="metric-bar">
+                  <div class="bar-track">
+                    <div class="bar-fill" style="width: 60%;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            
+            <header class="panel-header-row">
+              <div>
+                <h2>Model</h2>
+                <p>Configure the behavior of the assistant.</p>
+              </div>
+            </header>
+            <div class="panel-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Provider</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="modelProvider" panelClass="dark-panel">
+                      <mat-option *ngFor="let provider of modelProviders" [value]="provider">{{ getProviderDisplayName(provider) }}</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Model</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="modelName" panelClass="dark-panel">
+                      <mat-option *ngFor="let model of getModelOptions(modelProvider)" [value]="model">{{ model }}</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="field-header">
+                <h3>First Message Mode</h3>
+                <p>Choose who speaks first in the conversation.</p>
+              </div>
+              
+              <div class="field">
+                <div class="select-wrapper">
+                  <mat-select [(ngModel)]="firstMessageMode" panelClass="dark-panel">
+                    <mat-option value="assistant">Assistant speaks first</mat-option>
+                    <mat-option value="user">User speaks first</mat-option>
+                  </mat-select>
+                </div>
+              </div>
+              
+              <div class="field">
+                <label>First Message</label>
+                <textarea rows="3" [(ngModel)]="firstMessage" placeholder="Hello."></textarea>
+              </div>
+              
+              <div class="field-header">
+                <h3>System Prompt</h3>
+                <p>Instructions for the model's behavior.</p>
+              </div>
+              
+              <div class="field">
+                <textarea rows="6" [(ngModel)]="systemPrompt" 
+                  placeholder="Enter your system prompt here..."></textarea>
+                <div class="textarea-actions">
+                  <button mat-button class="generate-button">
+                    <mat-icon>auto_fix_high</mat-icon>
+                    Generate
+                  </button>
+                  <button mat-icon-button class="expand-button">
+                    <mat-icon>fullscreen</mat-icon>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="field-grid">
+                <div class="field">
+                  <label>Files</label>
+                  <button mat-stroked-button>
+                    <mat-icon>attach_file</mat-icon>
+                    <span>Select Files</span>
+                  </button>
+                </div>
+                <div class="field">
+                  <label>Max Tokens</label>
+                  <input matInput type="number" min="1" [(ngModel)]="maxTokens" placeholder="250">
+                </div>
+              </div>
+              
+              <div class="field with-slider">
+                <label>Temperature</label>
+                <div class="slider-row">
+                  <input type="range" min="0" max="1" step="0.01" [(ngModel)]="temperature">
+                  <span class="value-chip">{{ temperature }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'voice'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Voice</h2>
+                <p>Select a voice from the list, or sync your voice library if it's missing.</p>
+              </div>
+            </header>
+            <div class="panel-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Provider</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="voiceProvider" panelClass="dark-panel">
+                      <mat-option *ngFor="let provider of voiceProviders" [value]="provider">{{ getProviderDisplayName(provider) }}</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Voice</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="voiceId" panelClass="dark-panel">
+                      <mat-option *ngFor="let voice of availableVoices" [value]="voice.id">{{ voice.name }}</mat-option>
+                    </mat-select>
+                  </div>
+                  <!-- Voice Preview Button -->
+                  image.png                  <div class="voice-preview-section" *ngIf="hasVoicePreview()">
+                    <button 
+                      type="button" 
+                      class="preview-btn"
+                      (click)="playVoicePreview(getSelectedVoicePreviewUrl())">
+                      <mat-icon>play_circle</mat-icon>
+                      🔊 Preview Voice
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="field toggle">
+                <div class="toggle-label">
+                  <span>Add Voice ID Manually</span>
+                </div>
+                <mat-slide-toggle color="primary" [(ngModel)]="manualVoiceId"></mat-slide-toggle>
+              </div>
+              
+              <div class="field" *ngIf="manualVoiceId">
+                <label>Voice ID</label>
+                <input matInput type="text" [(ngModel)]="voiceId">
+              </div>
+              
+              <div class="field-header">
+                <h3>Additional Configuration</h3>
+                <p>Configure additional settings for the voice of your assistant.</p>
+              </div>
+              
+              <div class="field with-slider">
+                <label>Speaking Rate</label>
+                <div class="slider-row">
+                  <input type="range" min="0.5" max="2" step="0.1" [(ngModel)]="speakingRate">
+                  <span class="value-chip">{{ speakingRate }}</span>
+                </div>
+              </div>
+              <div class="field with-slider">
+                <label>Pitch</label>
+                <div class="slider-row">
+                  <input type="range" min="0.5" max="2" step="0.1" [(ngModel)]="pitch">
+                  <span class="value-chip">{{ pitch }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'transcriber'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Transcriber</h2>
+                <p>This section allows you to configure the transcription settings for the assistant.</p>
+              </div>
+            </header>
+            <div class="panel-body">
+              <div class="field-grid">
+                <div class="field">
+                  <label>Provider</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="transcriberProvider" panelClass="dark-panel">
+                      <mat-option *ngFor="let provider of transcriberProviders" [value]="provider">{{ getProviderDisplayName(provider) }}</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Language</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="transcriberLanguage" panelClass="dark-panel">
+                      <mat-option value="en">English</mat-option>
+                      <mat-option value="es">Spanish</mat-option>
+                      <mat-option value="fr">French</mat-option>
+                      <mat-option value="de">German</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+                <div class="field">
+                  <label>Model</label>
+                  <div class="select-wrapper">
+                    <mat-select [(ngModel)]="transcriberModel" panelClass="dark-panel">
+                      <mat-option value="nova-2">Nova 2</mat-option>
+                      <mat-option value="nova-3">Nova 3</mat-option>
+                      <mat-option value="whisper-1">Whisper-1</mat-option>
+                    </mat-select>
+                  </div>
+                </div>
+              </div>
+              <div class="field toggle">
+                <div class="toggle-label">
+                  <span>Background Denoising</span>
+                  <small>Reduce background noise in the call</small>
+                </div>
+                <mat-slide-toggle color="primary"></mat-slide-toggle>
+              </div>
+              <div class="field toggle">
+                <div class="toggle-label">
+                  <span>Use Numerals</span>
+                  <small>Convert numbers from words to digits in transcription</small>
+                </div>
+                <mat-slide-toggle color="primary"></mat-slide-toggle>
+              </div>
+              <div class="field with-slider">
+                <label>Confidence Threshold</label>
+                <div class="slider-row">
+                  <input type="range" min="0" max="1" step="0.1" value="0.4">
+                  <span class="value-chip">0.4</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>Keyterms</label>
+                <textarea rows="3" placeholder="Enter keywords separated by spaces"></textarea>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'tools'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Tools</h2>
+                <p>Tools enable voicebots to perform actions during calls.</p>
+              </div>
+            </header>
+            <div class="panel-body">
+              <div class="tool-card">
+                <div class="tool-header">
+                  <div class="tool-title">Appointment Scheduling</div>
+                  <mat-slide-toggle color="primary"></mat-slide-toggle>
+                </div>
+                <p>Allow the assistant to schedule appointments in your calendar system.</p>
+              </div>
+              <div class="tool-card">
+                <div class="tool-header">
+                  <div class="tool-title">Contact Information Collection</div>
+                  <mat-slide-toggle color="primary"></mat-slide-toggle>
+                </div>
+                <p>Allow the assistant to collect and store contact information.</p>
+              </div>
+              <button mat-stroked-button color="primary">
+                <mat-icon>add</mat-icon>
+                <span>Add Custom Function</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'analysis'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Analysis</h2>
+                <p>View analytics for your assistant.</p>
+              </div>
+            </header>
+            <div class="panel-body muted">Analytics coming soon.</div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'advanced'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Advanced Settings</h2>
+                <p>Configure advanced behaviors for your assistant.</p>
+              </div>
+            </header>
+            <div class="panel-body muted">Advanced settings are not yet implemented.</div>
+          </section>
+
+          <section class="panel" *ngSwitchCase="'widget'">
+            <header class="panel-header-row">
+              <div>
+                <h2>Widget</h2>
+                <p>Configure the embedded widget for your assistant.</p>
+              </div>
+            </header>
+            <div class="panel-body muted">Widget configuration will appear here.</div>
+          </section>
+        </div>
+
+      </div>
+    </ng-container>
+    <ng-template #emptyState>
+      <div class="assistant-placeholder">
+        <mat-icon>smart_toy</mat-icon>
+        <h3>Select an assistant to configure</h3>
+        <p>Choose an assistant from the list or create a new one to get started.</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- JSON Configuration Panel -->
+  <div class="json-config-panel" *ngIf="showCodePanel && (selectedAssistant || isCreating)">
+    <div class="json-panel-header">
+      <h3>Assistant Configuration</h3>
+      <div class="json-panel-actions">
+        <button mat-icon-button (click)="copyAssistantConfig()" matTooltip="Copy JSON">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+        <button mat-icon-button (click)="closeCodePanel()" matTooltip="Close">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div class="json-panel-tabs">
+      <button class="json-tab active">JSON Format</button>
+    </div>
+    <div class="json-content">
+      <pre class="json-display">{{ getAssistantConfigJson() }}</pre>
+    </div>
+  </div>
+</div>

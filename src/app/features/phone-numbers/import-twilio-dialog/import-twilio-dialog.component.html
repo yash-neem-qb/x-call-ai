@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>Phone Number Options</h2>
+
+<mat-dialog-content class="import-dialog-content">
+  <div class="dialog-layout">
+    <!-- Left Side - Options List -->
+    <div class="options-sidebar">
+      <div class="option-item active">
+        <mat-icon>phone</mat-icon>
+        <span>Import Twilio</span>
+      </div>
+    </div>
+
+    <!-- Right Side - Twilio Import Form -->
+    <div class="form-content">
+      <div class="form-group">
+        <label>Twilio Phone Number</label>
+        <div class="phone-input-wrapper">
+          <div class="country-selector">
+            <img src="https://flagcdn.com/w20/us.png" alt="US" class="country-flag">
+            <mat-icon>keyboard_arrow_down</mat-icon>
+          </div>
+          <input 
+            type="text" 
+            [(ngModel)]="twilioPhoneNumber" 
+            placeholder="+14156021922"
+            class="phone-input">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Twilio Account SID</label>
+        <input 
+          type="text" 
+          [(ngModel)]="twilioAccountSid" 
+          placeholder="Twilio Account SID"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Twilio Auth Token</label>
+        <input 
+          type="password" 
+          [(ngModel)]="twilioAuthToken" 
+          placeholder="Twilio Auth Token"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label>Label</label>
+        <input 
+          type="text" 
+          [(ngModel)]="phoneLabel" 
+          placeholder="Label for Phone Number"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <div class="toggle-wrapper">
+          <mat-slide-toggle 
+            [(ngModel)]="smsEnabled" 
+            color="primary"
+            class="sms-toggle">
+          </mat-slide-toggle>
+          <span class="toggle-label">Enable SMS messaging for this phone number</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-button (click)="cancel()" class="cancel-button">Cancel</button>
+  <button 
+    mat-flat-button 
+    color="primary" 
+    (click)="importFromTwilio()"
+    [disabled]="!isFormValid() || isImporting"
+    class="import-button">
+    <mat-spinner diameter="20" *ngIf="isImporting"></mat-spinner>
+    <span>{{ isImporting ? 'Importing...' : 'Import from Twilio' }}</span>
+  </button>
+</mat-dialog-actions>

@@ -1,0 +1,370 @@
+<!-- Call Detail Page -->
+<div class="call-detail-page">
+  <!-- Header -->
+  <div class="call-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="call-info">
+        <h1 class="call-title">Call Details</h1>
+        <div class="call-meta" *ngIf="call">
+          <span class="call-date">{{ call.created_at | date:'MM/dd/yyyy HH:mm' }}</span>
+          <span class="call-type">{{ call.direction }} Call</span>
+          <span class="call-assistant">Assistant</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="header-right" *ngIf="call">
+      <div class="call-id-section">
+        <span class="call-id">{{ call.id }}</span>
+        <button mat-icon-button (click)="copyCallId()" matTooltip="Copy Call ID">
+          <mat-icon>content_copy</mat-icon>
+        </button>
+        <button mat-icon-button matTooltip="Favorite">
+          <mat-icon>favorite_border</mat-icon>
+        </button>
+      </div>
+      <div class="call-cost">
+        <span class="cost-label">Cost:</span>
+        <span class="cost-amount">${{ call.cost_usd || 0 }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading call details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="error && !isLoading">
+    <mat-icon>error</mat-icon>
+    <h3>Error Loading Call</h3>
+    <p>{{ error }}</p>
+    <button mat-button (click)="loadCallDetails()">Retry</button>
+  </div>
+
+  <!-- Call Content -->
+  <div class="call-content" *ngIf="call && !isLoading">
+    
+    <!-- Recording Section -->
+    <div class="recording-section">
+      <h2 class="section-title">Recording</h2>
+      
+      <!-- No Recording State -->
+      <div class="no-recording" *ngIf="!call.recording_url">
+        <div class="no-recording-content">
+          <mat-icon class="no-recording-icon">mic_off</mat-icon>
+          <h3>No Recording Available</h3>
+          <p>This call was not recorded or the recording is not available.</p>
+        </div>
+      </div>
+      
+      <!-- Recording Available -->
+      <div class="audio-waveform" *ngIf="call.recording_url">
+        <!-- Waveform visualization -->
+        <div class="waveform-container">
+          <div class="waveform-track user-track">
+            <div class="waveform-bar" style="width: 20%;"></div>
+          </div>
+          <div class="waveform-track assistant-track">
+            <div class="waveform-bar" style="width: 80%;"></div>
+          </div>
+        </div>
+        <div class="waveform-timeline">
+          <span>0</span>
+          <span>5</span>
+          <span>10</span>
+          <span>15</span>
+          <span>20</span>
+          <span>25</span>
+          <span>30</span>
+        </div>
+      </div>
+      
+      <div class="recording-controls" *ngIf="call.recording_url">
+        <button mat-fab class="play-button">
+          <mat-icon>play_arrow</mat-icon>
+        </button>
+        <div class="duration">{{ formatDuration(call.duration_seconds) }}</div>
+        <button mat-button class="download-button">
+          <mat-icon>download</mat-icon>
+          Audio
+        </button>
+      </div>
+    </div>
+
+     <!-- Navigation Tabs -->
+     <div class="tabs-container">
+       <mat-tab-group [(selectedIndex)]="activeTab" (selectedIndexChange)="setActiveTab($event)">
+         <mat-tab label="Transcripts"></mat-tab>
+         <mat-tab label="Analysis"></mat-tab>
+         <mat-tab label="Messages"></mat-tab>
+         <mat-tab label="Call Cost"></mat-tab>
+       </mat-tab-group>
+     </div>
+
+     <!-- Transcripts Tab Content -->
+     <div class="tab-content" *ngIf="activeTab === 0">
+      <div class="transcripts-container">
+        <div class="transcript-messages">
+          <div 
+            class="transcript-message" 
+            [class.user-message]="message.speaker === 'user'"
+            [class.assistant-message]="message.speaker === 'assistant'"
+            [class.system-message]="message.speaker === 'system'"
+            *ngFor="let message of call.transcript_data; let i = index">
+            
+            <div class="message-bubble">
+              <div class="message-header">
+                <span class="speaker-label">{{ message.speaker | titlecase }}</span>
+                <span class="message-text">{{ message.message }}</span>
+              </div>
+              <div class="message-footer">
+                <span class="timestamp">{{ formatTimestamp(message.timestamp) }}</span>
+                <span class="relative-time">{{ getRelativeTime(message.timestamp, i) }}</span>
+                <button mat-icon-button class="thumbs-up">
+                  <mat-icon>thumb_up</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Call End Notification -->
+        <div class="call-end-notification" *ngIf="call.end_reason">
+          <div class="end-notification-bubble">
+            <mat-icon>phone_hangup</mat-icon>
+            <span>{{ getEndReasonText() }} {{ getEndTime() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+     <!-- Messages Tab Content -->
+     <div class="tab-content" *ngIf="activeTab === 2">
+      <div class="messages-container">
+        <!-- Search Bar -->
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input 
+              type="text" 
+              placeholder="Q Search in messages..." 
+              [(ngModel)]="messageSearchTerm"
+              (input)="filterMessages()"
+              class="search-input">
+          </div>
+        </div>
+
+        <!-- Messages List -->
+        <div class="messages-list">
+          <div 
+            class="message-item" 
+            *ngFor="let message of filteredMessages; let i = index; trackBy: trackByMessageIndex">
+            
+            <div class="message-header">
+              <span class="message-number">Message {{ i + 1 }}</span>
+              <span class="message-role">{{ message.role }}</span>
+              <span class="message-time">{{ formatTimestamp(message.timestamp) }}</span>
+              <button mat-icon-button class="copy-button" (click)="copyMessage(message)">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+            </div>
+            
+            <div class="message-content">
+              <pre class="json-content">{{ formatMessageAsJson(message) }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+     <!-- Analysis Tab Content -->
+     <div class="tab-content" *ngIf="activeTab === 1">
+      <div class="analysis-container">
+        
+        <!-- Analysis Loading State -->
+        <div class="analysis-loading" *ngIf="!call?.analysis_completed">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Analysis in progress...</p>
+        </div>
+
+        <!-- Analysis Content -->
+        <div class="analysis-content" *ngIf="call?.analysis_completed">
+          
+          <!-- Summary Section -->
+          <div class="analysis-section">
+            <h3 class="section-title">Summary</h3>
+            <div class="section-content">
+              <p class="summary-text">{{ call.call_summary || 'No summary available' }}</p>
+            </div>
+          </div>
+
+          <!-- Success Evaluation Section -->
+          <div class="analysis-section">
+            <h3 class="section-title">Success Evaluation</h3>
+            <div class="section-content">
+              <div class="success-indicator" [class.success]="call.call_success" [class.failed]="!call.call_success">
+                <mat-icon *ngIf="call.call_success">check_circle</mat-icon>
+                <mat-icon *ngIf="!call.call_success">cancel</mat-icon>
+                <span>{{ call.call_success ? 'Success' : 'Failed' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data Section - Sentiment & Analysis -->
+          <div class="analysis-section">
+            <h3 class="section-title">Data</h3>
+            <p class="section-subtitle">This is the data extracted based on the Conversation.</p>
+            <div class="section-content" *ngIf="call.detailed_analysis">
+              
+              <!-- Sentiment Score -->
+              <div class="sentiment-score-section">
+                <h4 class="subsection-title">Sentiment Score</h4>
+                <div class="sentiment-score-display">
+                  <div class="score-circle" [style.background]="getSentimentColor(call.sentiment_score)">
+                    <span class="score-value">{{ getSentimentPercentage(call.sentiment_score) }}%</span>
+                  </div>
+                  <div class="score-description">
+                    <span class="score-label">{{ getSentimentLabel(call.sentiment_score) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sentiment Breakdown -->
+              <div class="sentiment-breakdown-section" *ngIf="call.detailed_analysis.sentiment_breakdown">
+                <h4 class="subsection-title">Sentiment Breakdown</h4>
+                <div class="breakdown-grid">
+                  <div class="breakdown-item">
+                    <span class="breakdown-label">Customer Sentiment:</span>
+                    <span class="breakdown-value sentiment-badge" [class]="'sentiment-' + call.detailed_analysis.sentiment_breakdown.customer_sentiment">
+                      {{ call.detailed_analysis.sentiment_breakdown.customer_sentiment }}
+                    </span>
+                  </div>
+                  <div class="breakdown-item">
+                    <span class="breakdown-label">Assistant Performance:</span>
+                    <span class="breakdown-value performance-badge" [class]="'performance-' + call.detailed_analysis.sentiment_breakdown.assistant_performance">
+                      {{ call.detailed_analysis.sentiment_breakdown.assistant_performance }}
+                    </span>
+                  </div>
+                  <div class="breakdown-item">
+                    <span class="breakdown-label">Overall Tone:</span>
+                    <span class="breakdown-value">{{ call.detailed_analysis.sentiment_breakdown.overall_tone }}</span>
+                  </div>
+                </div>
+
+                <!-- Emotional Indicators -->
+                <div class="emotional-indicators" *ngIf="call.detailed_analysis.sentiment_breakdown.emotional_indicators?.length">
+                  <h5 class="indicators-title">Emotional Indicators</h5>
+                  <div class="indicators-list">
+                    <span class="indicator-tag" *ngFor="let indicator of call.detailed_analysis.sentiment_breakdown.emotional_indicators">
+                      {{ indicator }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata Section - Conversation Metrics -->
+          <div class="analysis-section">
+            <h3 class="section-title">Metadata</h3>
+            <div class="section-content" *ngIf="call.detailed_analysis">
+              
+              <!-- Conversation Metrics -->
+              <div class="conversation-metrics-section" *ngIf="call.detailed_analysis.conversation_metrics">
+                <h4 class="subsection-title">Conversation Metrics</h4>
+                <div class="metrics-grid">
+                  <div class="metric-item">
+                    <span class="metric-label">Resolution Quality:</span>
+                    <span class="metric-value" [class]="'metric-' + call.detailed_analysis.conversation_metrics.resolution_quality">
+                      {{ call.detailed_analysis.conversation_metrics.resolution_quality }}
+                    </span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Response Time:</span>
+                    <span class="metric-value" [class]="'metric-' + call.detailed_analysis.conversation_metrics.response_time">
+                      {{ call.detailed_analysis.conversation_metrics.response_time }}
+                    </span>
+                  </div>
+                  <div class="metric-item">
+                    <span class="metric-label">Communication:</span>
+                    <span class="metric-value" [class]="'metric-' + call.detailed_analysis.conversation_metrics.communication_effectiveness">
+                      {{ call.detailed_analysis.conversation_metrics.communication_effectiveness }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Customer Satisfaction Indicators -->
+                <div class="satisfaction-indicators" *ngIf="call.detailed_analysis.conversation_metrics.customer_satisfaction_indicators?.length">
+                  <h5 class="indicators-title">Customer Satisfaction Indicators</h5>
+                  <div class="indicators-list">
+                    <span class="indicator-tag satisfaction" *ngFor="let indicator of call.detailed_analysis.conversation_metrics.customer_satisfaction_indicators">
+                      {{ indicator }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Key Topics -->
+              <div class="key-topics-section" *ngIf="call.detailed_analysis.key_topics?.length">
+                <h4 class="subsection-title">Key Topics</h4>
+                <div class="topics-list">
+                  <span class="topic-tag" *ngFor="let topic of call.detailed_analysis.key_topics">
+                    {{ topic }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Action Items -->
+              <div class="action-items-section" *ngIf="call.detailed_analysis.action_items?.length">
+                <h4 class="subsection-title">Action Items</h4>
+                <ul class="action-items-list">
+                  <li *ngFor="let item of call.detailed_analysis.action_items">{{ item }}</li>
+                </ul>
+              </div>
+
+              <!-- Improvement Suggestions -->
+              <div class="improvement-suggestions-section" *ngIf="call.detailed_analysis.improvement_suggestions?.length">
+                <h4 class="subsection-title">Improvement Suggestions</h4>
+                <ul class="suggestions-list">
+                  <li *ngFor="let suggestion of call.detailed_analysis.improvement_suggestions">{{ suggestion }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis Error State -->
+        <div class="analysis-error" *ngIf="call?.analysis_completed && !call.detailed_analysis">
+          <mat-icon>error</mat-icon>
+          <p>Analysis data not available</p>
+        </div>
+      </div>
+    </div>
+
+     <!-- Call Cost Tab Content -->
+     <div class="tab-content" *ngIf="activeTab === 3">
+      <div class="call-cost-container">
+        <div class="cost-summary">
+          <div class="cost-item">
+            <span class="cost-label">Total Cost:</span>
+            <span class="cost-amount">${{ call?.cost_usd || 0 }}</span>
+          </div>
+          <div class="cost-item">
+            <span class="cost-label">Currency:</span>
+            <span class="cost-currency">{{ call?.cost_currency || 'USD' }}</span>
+          </div>
+          <div class="cost-item">
+            <span class="cost-label">Duration:</span>
+            <span class="cost-duration">{{ formatDuration(call?.duration_seconds) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

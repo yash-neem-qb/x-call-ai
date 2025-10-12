@@ -1,0 +1,215 @@
+<!-- Knowledge Base page content -->
+<div class="knowledge-base-page">
+  <!-- Left column: Assistant selection and file upload -->
+  <div class="upload-column">
+    <div class="upload-header">
+      <h1>Knowledge Base</h1>
+      <p>Upload files to enhance your assistant's knowledge</p>
+    </div>
+
+    <!-- Assistant Selection -->
+    <div class="assistant-selection" *ngIf="assistants.length > 0">
+      <label>Select Assistant</label>
+      <div class="assistant-list">
+        <div class="assistant-item" 
+             *ngFor="let assistant of assistants"
+             [class.active]="selectedAssistant?.id === assistant.id"
+             (click)="selectAssistant(assistant)">
+          <div class="assistant-info">
+            <div class="assistant-name">{{ assistant.name }}</div>
+            <div class="assistant-meta">{{ assistant.model?.provider | lowercase }} / {{ assistant.model?.model }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Right column: Knowledge Base Files -->
+  <div class="files-column" *ngIf="selectedAssistant">
+    <div class="files-header">
+      <div class="header-content">
+        <div>
+          <h2>Knowledge Base Files</h2>
+          <p>{{ knowledgeBaseFiles.length }} file{{ knowledgeBaseFiles.length !== 1 ? 's' : '' }} for {{ selectedAssistant.name }}</p>
+        </div>
+        <button mat-flat-button 
+                color="primary" 
+                (click)="openUploadDialog()"
+                [disabled]="isUploading">
+          <mat-icon>upload_file</mat-icon>
+          Upload File
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-state" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading knowledge base files...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-state" *ngIf="error && !isLoading">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-button (click)="loadKnowledgeBaseFiles()">Retry</button>
+    </div>
+
+    <!-- Files List -->
+    <div class="files-list" *ngIf="!isLoading && !error">
+      <div class="file-item" *ngFor="let file of knowledgeBaseFiles">
+        <div class="file-icon">
+          <mat-icon>{{ getFileIcon(file.metadata.file_type) }}</mat-icon>
+        </div>
+        
+        <div class="file-details">
+          <div class="file-name">{{ file.metadata.original_filename }}</div>
+          <div class="file-meta">
+            <span class="file-size">{{ formatFileSize(file.metadata.file_size) }}</span>
+            <span class="file-date">{{ file.created_at | date:'short' }}</span>
+          </div>
+        </div>
+
+        <div class="file-status">
+          <span class="status-badge ready">
+            Ready
+          </span>
+        </div>
+
+        <div class="file-actions">
+          <button mat-icon-button [matMenuTriggerFor]="fileMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #fileMenu="matMenu">
+            <button mat-menu-item (click)="deleteFile(file)">
+              <mat-icon>delete</mat-icon>
+              <span>Delete</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="knowledgeBaseFiles.length === 0 && !isLoading && !error">
+      <mat-icon>folder_open</mat-icon>
+      <h3>No files uploaded yet</h3>
+      <p>Upload files to enhance your assistant's knowledge base</p>
+    </div>
+  </div>
+
+  <!-- No Assistant Selected State -->
+  <div class="no-assistant-state" *ngIf="!selectedAssistant && assistants.length > 0">
+    <mat-icon>smart_toy</mat-icon>
+    <h3>Select an Assistant</h3>
+    <p>Choose an assistant to manage their knowledge base files</p>
+  </div>
+
+  <!-- No Assistants State -->
+  <div class="no-assistants-state" *ngIf="assistants.length === 0 && !isLoading">
+    <mat-icon>smart_toy</mat-icon>
+    <h3>No Assistants Found</h3>
+    <p>Create an assistant first to manage knowledge base files</p>
+    <button mat-flat-button 
+            color="primary" 
+            (click)="createAssistant()">
+      <mat-icon>add</mat-icon>
+      Create Assistant
+    </button>
+  </div>
+</div>
+
+<!-- Upload Dialog -->
+<div class="upload-dialog-overlay" *ngIf="showUploadDialog" (click)="closeUploadDialog()">
+  <div class="upload-dialog" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h2>Upload Files</h2>
+      <button mat-icon-button (click)="closeUploadDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <div class="dialog-content">
+      <div class="upload-area" 
+           [class.drag-over]="dragOver"
+           [class.uploading]="isUploading"
+           (dragover)="onDragOver($event)"
+           (dragleave)="onDragLeave($event)"
+           (drop)="onDrop($event)"
+           (click)="fileInput.click()">
+        
+        <div class="upload-content">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <h3>Drop files here or click to browse</h3>
+          <p>Supported formats: {{ supportedFileTypes.join(', ') }}</p>
+          <p class="file-limit">Max file size: 10MB</p>
+        </div>
+
+        <input #fileInput 
+               type="file" 
+               multiple 
+               [accept]="supportedFileTypes.join(',')"
+               (change)="onFileSelected($event)"
+               style="display: none;">
+      </div>
+
+      <!-- Selected Files -->
+      <div class="selected-files" *ngIf="selectedFiles.length > 0">
+        <div class="selected-files-header">
+          <h4>Selected Files ({{ selectedFiles.length }})</h4>
+          <button mat-button (click)="clearSelectedFiles()" [disabled]="isUploading">
+            <mat-icon>clear_all</mat-icon>
+            Clear All
+          </button>
+        </div>
+        
+        <div class="file-list">
+          <div class="file-item" *ngFor="let file of selectedFiles">
+            <mat-icon>{{ getFileIcon('.' + file.name.split('.').pop()) }}</mat-icon>
+            <div class="file-info">
+              <div class="file-name">{{ file.name }}</div>
+              <div class="file-size">{{ formatFileSize(file.size) }}</div>
+            </div>
+            <button mat-icon-button (click)="removeSelectedFile(file)" [disabled]="isUploading">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Progress -->
+      <div class="upload-progress" *ngIf="uploadProgress.length > 0">
+        <div class="progress-item" *ngFor="let progress of uploadProgress">
+          <div class="progress-header">
+            <span class="file-name">{{ progress.file.name }}</span>
+            <span class="status" [style.color]="getStatusColor(progress.status)">
+              {{ getStatusText(progress.status) }}
+            </span>
+          </div>
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="progress.progress"
+            [color]="progress.status === 'error' ? 'warn' : 'primary'">
+          </mat-progress-bar>
+          <div class="progress-text" *ngIf="progress.error">
+            {{ progress.error }}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dialog-actions">
+      <button mat-button (click)="closeUploadDialog()" [disabled]="isUploading">
+        Cancel
+      </button>
+      <button mat-flat-button 
+              color="primary" 
+              (click)="uploadFiles()" 
+              [disabled]="isUploading || selectedFiles.length === 0">
+        <mat-icon>upload</mat-icon>
+        Upload {{ selectedFiles.length }} File{{ selectedFiles.length !== 1 ? 's' : '' }}
+      </button>
+    </div>
+  </div>
+</div>

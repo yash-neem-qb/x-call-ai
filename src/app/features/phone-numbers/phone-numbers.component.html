@@ -1,0 +1,155 @@
+<!-- Phone Numbers content -->
+<div class="phone-numbers-wrapper">
+  <!-- Phone Numbers List Panel -->
+  <div class="phone-numbers-list-panel">
+    <div class="panel-header">
+      <h1 class="panel-title">Phone Numbers</h1>
+      <button mat-flat-button color="primary" class="create-button" (click)="createPhoneNumber()">
+        <mat-icon>add</mat-icon>
+        <span>Create Phone Number</span>
+      </button>
+    </div>
+    
+    <div class="search-box">
+      <mat-icon>search</mat-icon>
+      <input 
+        type="text" 
+        placeholder="Search name, number, SIP..." 
+        [(ngModel)]="searchQuery"
+      >
+    </div>
+    
+    <!-- Instructional text when no phone number is selected -->
+    <div class="instruction-text" *ngIf="!isLoading && phoneNumbers && phoneNumbers.length > 0 && !selectedPhoneNumber">
+      <h3>Select a phone number to configure</h3>
+      <p>Choose a phone number from the list or create a new one to get started.</p>
+    </div>
+    
+    <div class="phone-list" *ngIf="!isLoading && phoneNumbers && phoneNumbers.length > 0">
+      <div 
+        class="phone-item" 
+        *ngFor="let phoneNumber of phoneNumbers" 
+        [class.active]="selectedPhoneNumber && selectedPhoneNumber.id === phoneNumber.id"
+        (click)="selectPhoneNumber(phoneNumber)"
+      >
+        <div class="phone-number">{{ phoneNumber.phone_number }}</div>
+        <div class="phone-name">{{ phoneNumber.friendly_name }}</div>
+        <div class="phone-assistant" *ngIf="phoneNumber.assistant_name">{{ phoneNumber.assistant_name }}</div>
+        <div class="phone-assistant empty" *ngIf="!phoneNumber.assistant_name">Unassigned</div>
+      </div>
+    </div>
+    
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!isLoading && (!phoneNumbers || phoneNumbers.length === 0)">
+      <mat-icon>phone</mat-icon>
+      <h2>No phone numbers found</h2>
+      <p *ngIf="searchQuery">Try adjusting your search query</p>
+      <p *ngIf="!searchQuery">Purchase your first phone number to get started</p>
+    </div>
+    
+    <!-- Loading state -->
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading phone numbers...</p>
+    </div>
+    
+    <!-- Error state -->
+    <div class="error-state" *ngIf="error">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error }}</p>
+      <button mat-button (click)="loadPhoneNumbers()">Try Again</button>
+    </div>
+  </div>
+  
+  <!-- Phone Number Detail Panel -->
+  <div class="phone-detail-panel" *ngIf="selectedPhoneNumber">
+    <div class="panel-header">
+      <div class="back-button" (click)="cancelEdit()">
+        <mat-icon>arrow_back</mat-icon>
+      </div>
+      <h2 class="panel-title">{{ selectedPhoneNumber.phone_number }}</h2>
+      <div class="header-actions">
+        <button mat-icon-button [matMenuTriggerFor]="phoneMenu">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #phoneMenu="matMenu">
+          <button mat-menu-item (click)="releasePhoneNumber(selectedPhoneNumber)">
+            <mat-icon>delete</mat-icon>
+            <span>Release Number</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+    
+    <div class="panel-body">
+      <div class="form-group">
+        <label>Phone Number</label>
+        <input type="text" [value]="selectedPhoneNumber.phone_number" readonly disabled>
+      </div>
+      
+      <div class="form-group">
+        <label>Friendly Name</label>
+        <input type="text" [(ngModel)]="editedName" placeholder="Enter a friendly name">
+      </div>
+      
+      <div class="form-group">
+        <label>Assigned Assistant</label>
+        <div class="select-wrapper">
+          <mat-select [(ngModel)]="selectedAssistantId" panelClass="dark-panel">
+            <mat-option [value]="null">None</mat-option>
+            <mat-option *ngFor="let assistant of assistants" [value]="assistant.id">
+              {{ assistant.name }}
+            </mat-option>
+          </mat-select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Country</label>
+        <input type="text" [value]="selectedPhoneNumber.country" readonly disabled>
+      </div>
+      
+      <div class="form-group" *ngIf="selectedPhoneNumber.region">
+        <label>Region</label>
+        <input type="text" [value]="selectedPhoneNumber.region" readonly disabled>
+      </div>
+      
+      <div class="form-group">
+        <label>Capabilities</label>
+        <div class="capabilities">
+          <div class="capability" [class.active]="selectedPhoneNumber.capabilities.voice">
+            <mat-icon>call</mat-icon>
+            <span>Voice</span>
+          </div>
+          <div class="capability" [class.active]="selectedPhoneNumber.capabilities.sms">
+            <mat-icon>sms</mat-icon>
+            <span>SMS</span>
+          </div>
+          <div class="capability" [class.active]="selectedPhoneNumber.capabilities.mms">
+            <mat-icon>mms</mat-icon>
+            <span>MMS</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Status</label>
+        <div class="status-badge" [class]="selectedPhoneNumber.status">
+          {{ selectedPhoneNumber.status }}
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <button mat-button (click)="cancelEdit()">Cancel</button>
+        <button mat-flat-button color="primary" (click)="saveChanges()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- No Selection State -->
+  <div class="no-selection" *ngIf="!selectedPhoneNumber && !isLoading && phoneNumbers.length > 0">
+    <mat-icon>phone</mat-icon>
+    <h2>No phone number selected</h2>
+    <p>Select a phone number from the list to view or edit its details</p>
+  </div>
+</div>

@@ -1,0 +1,205 @@
+<form [formGroup]="assistantForm" (ngSubmit)="onSubmit()" class="assistant-form">
+  <!-- Basic Information -->
+  <div class="form-section">
+    <h3 class="section-title">Basic Information</h3>
+    
+    <div class="form-field">
+      <label for="name">Name</label>
+      <input type="text" id="name" formControlName="name" placeholder="Enter assistant name">
+      <div class="error-message" *ngIf="assistantForm.get('name')?.invalid && assistantForm.get('name')?.touched">
+        Assistant name is required
+      </div>
+    </div>
+  </div>
+  
+  <!-- Model Configuration -->
+  <div class="form-section" formGroupName="model">
+    <h3 class="section-title">Model Configuration</h3>
+    
+    <div class="form-field">
+      <label for="modelProvider">Provider</label>
+      <select id="modelProvider" formControlName="provider">
+        <option *ngFor="let provider of modelProviders" [value]="provider">{{ provider }}</option>
+      </select>
+    </div>
+    
+    <div class="form-field">
+      <label for="model">Model</label>
+      <select id="model" formControlName="model">
+        <option *ngFor="let model of getModelOptions(assistantForm.get('model.provider')?.value)" [value]="model">{{ model }}</option>
+      </select>
+    </div>
+    
+    <div class="form-field">
+      <label for="temperature">Temperature</label>
+      <div class="slider-container">
+        <input type="range" id="temperature" formControlName="temperature" min="0" max="1" step="0.1">
+        <span class="slider-value">{{ assistantForm.get('model.temperature')?.value }}</span>
+      </div>
+    </div>
+    
+    <div class="form-field">
+      <label for="systemPrompt">System Prompt</label>
+      <textarea id="systemPrompt" formControlName="systemPrompt" rows="5" placeholder="Enter system prompt"></textarea>
+    </div>
+  </div>
+  
+  <!-- Voice Configuration -->
+  <div class="form-section" formGroupName="voice">
+    <h3 class="section-title">Voice Configuration</h3>
+    
+    <div class="form-field">
+      <label for="voiceProvider">Provider</label>
+      <select id="voiceProvider" formControlName="provider">
+        <option *ngFor="let provider of voiceProviders" [value]="provider">{{ provider }}</option>
+      </select>
+    </div>
+    
+    <div class="form-field">
+      <label for="voiceId">Voice</label>
+      
+      <!-- Voice Search and Filters -->
+      <div class="voice-filters">
+        <div class="filter-row">
+          <input 
+            type="text" 
+            placeholder="Search voices..." 
+            [(ngModel)]="voiceSearchQuery"
+            (input)="filterVoices()"
+            class="voice-search">
+          
+          <select 
+            [(ngModel)]="selectedAccent" 
+            (change)="filterVoices()"
+            class="accent-filter">
+            <option value="">All Accents</option>
+            <option *ngFor="let accent of availableAccents" [value]="accent">
+              {{ accent.charAt(0).toUpperCase() + accent.slice(1) }}
+            </option>
+          </select>
+          
+          <select 
+            [(ngModel)]="selectedGender" 
+            (change)="filterVoices()"
+            class="gender-filter">
+            <option value="">All Genders</option>
+            <option *ngFor="let gender of availableGenders" [value]="gender">
+              {{ gender.charAt(0).toUpperCase() + gender.slice(1) }}
+            </option>
+          </select>
+          
+          <button 
+            type="button" 
+            (click)="clearVoiceFilters()" 
+            class="clear-filters-btn">
+            Clear Filters
+          </button>
+        </div>
+      </div>
+      
+      <!-- Voice Selection -->
+      <select id="voiceId" formControlName="voiceId" class="voice-select">
+        <option value="">Select a voice...</option>
+        <option *ngFor="let voice of filteredVoices" [value]="voice.voice_id">
+          {{ getVoiceDisplayName(voice) }}
+        </option>
+      </select>
+      
+      <!-- Voice Preview (if available) -->
+      <div class="voice-preview" *ngIf="assistantForm.get('voice.voiceId')?.value">
+        <div class="preview-info">
+          <span class="voice-info">
+            Selected: {{ getVoiceDisplayName(availableVoices.find(v => v.voice_id === assistantForm.get('voice.voiceId')?.value) || {} as Voice) }}
+          </span>
+          <button 
+            type="button" 
+            class="preview-btn"
+            *ngIf="availableVoices.find(v => v.voice_id === assistantForm.get('voice.voiceId')?.value)?.preview_url"
+            (click)="playVoicePreview(availableVoices.find(v => v.voice_id === assistantForm.get('voice.voiceId')?.value)?.preview_url || '')">
+            🔊 Preview
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="form-field">
+      <label for="stability">Stability</label>
+      <div class="slider-container">
+        <input type="range" id="stability" formControlName="stability" min="0" max="1" step="0.1">
+        <span class="slider-value">{{ assistantForm.get('voice.stability')?.value }}</span>
+      </div>
+    </div>
+    
+    <div class="form-field">
+      <label for="similarity">Similarity</label>
+      <div class="slider-container">
+        <input type="range" id="similarity" formControlName="similarity" min="0" max="1" step="0.1">
+        <span class="slider-value">{{ assistantForm.get('voice.similarity')?.value }}</span>
+      </div>
+    </div>
+    
+    <div class="form-field">
+      <label for="speakingRate">Speaking Rate</label>
+      <div class="slider-container">
+        <input type="range" id="speakingRate" formControlName="speakingRate" min="0.5" max="2.0" step="0.1">
+        <span class="slider-value">{{ assistantForm.get('voice.speakingRate')?.value }}</span>
+      </div>
+    </div>
+    
+    <div class="form-field">
+      <label for="pitch">Pitch</label>
+      <div class="slider-container">
+        <input type="range" id="pitch" formControlName="pitch" min="0.5" max="2.0" step="0.1">
+        <span class="slider-value">{{ assistantForm.get('voice.pitch')?.value }}</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Messages -->
+  <div class="form-section">
+    <h3 class="section-title">Messages</h3>
+    
+    <div class="form-field">
+      <label for="firstMessage">First Message</label>
+      <textarea id="firstMessage" formControlName="firstMessage" rows="3" placeholder="Enter first message"></textarea>
+    </div>
+    
+    <div class="form-field">
+      <label for="voicemailMessage">Voicemail Message</label>
+      <textarea id="voicemailMessage" formControlName="voicemailMessage" rows="3" placeholder="Enter voicemail message"></textarea>
+    </div>
+    
+    <div class="form-field">
+      <label for="endCallMessage">End Call Message</label>
+      <textarea id="endCallMessage" formControlName="endCallMessage" rows="3" placeholder="Enter end call message"></textarea>
+    </div>
+  </div>
+  
+  <!-- Transcriber Configuration -->
+  <div class="form-section" formGroupName="transcriber">
+    <h3 class="section-title">Transcriber Configuration</h3>
+    
+    <div class="form-field">
+      <label for="transcriberProvider">Provider</label>
+      <select id="transcriberProvider" formControlName="provider">
+        <option *ngFor="let provider of transcriberProviders" [value]="provider">{{ provider }}</option>
+      </select>
+    </div>
+    
+    <div class="form-field">
+      <label for="transcriberModel">Model</label>
+      <select id="transcriberModel" formControlName="model">
+        <option value="whisper-1">Whisper-1</option>
+        <option value="nova-2">Nova-2</option>
+      </select>
+    </div>
+  </div>
+  
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button type="button" class="cancel-button" (click)="onCancel()">Cancel</button>
+    <button type="submit" class="submit-button" [disabled]="assistantForm.invalid">
+      {{ isEditing ? 'Update' : 'Create' }} Assistant
+    </button>
+  </div>
+</form>
