@@ -44,6 +44,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   isRecording = false;
   isConnected = false;
   isConnecting = false;
+  isInitializing = false; // New state for pipeline initialization
   error: string | null = null;
   isMuted = false; // Mute/unmute state
   callDuration: string = '00:00';
@@ -106,6 +107,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     this.webrtcService.state$.pipe(takeUntil(this.destroy$)).subscribe(state => {
       this.isConnected = state.connected;
       this.isConnecting = state.connecting;
+      this.isInitializing = state.initializing;
       this.error = state.error;
       
            // Handle call duration timer

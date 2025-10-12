@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 export interface WebRTCState {
   connected: boolean;
   connecting: boolean;
+  initializing: boolean; // New state for pipeline initialization
   error: string | null;
   iceConnectionState: string;
   signalingState: string;
@@ -36,6 +37,7 @@ export class WebRTCAssistantService {
   private stateSubject = new BehaviorSubject<WebRTCState>({
     connected: false,
     connecting: false,
+    initializing: false,
     error: null,
     iceConnectionState: 'new',
     signalingState: 'stable'
@@ -53,7 +55,7 @@ export class WebRTCAssistantService {
    */
   async connectToAssistant(assistantId: string): Promise<boolean> {
     try {
-      this.updateState({ connected: false, connecting: true, error: null });
+      this.updateState({ connected: false, connecting: true, initializing: false, error: null });
       
       // Get user media for microphone access
       this.localStream = await navigator.mediaDevices.getUserMedia({
@@ -69,10 +71,11 @@ export class WebRTCAssistantService {
       // Connect to signaling server (no actual WebRTC peer connection needed)
       await this.connectSignalingServer(assistantId);
       
-      // Mark as connected since we have the stream and WebSocket
+      // Mark as initializing - pipeline is being set up on backend
       this.updateState({ 
-        connected: true, 
+        connected: false, 
         connecting: false, 
+        initializing: true,
         error: null,
         iceConnectionState: 'connected',
         signalingState: 'stable'
@@ -84,6 +87,7 @@ export class WebRTCAssistantService {
       this.updateState({ 
         connected: false, 
         connecting: false, 
+        initializing: false,
         error: `Connection failed: ${error.message}` 
       });
       return false;
@@ -116,12 +120,12 @@ export class WebRTCAssistantService {
     };
 
     this.ws.onclose = () => {
-      this.updateState({ connected: false, connecting: false, error: 'Signaling server disconnected' });
+      this.updateState({ connected: false, connecting: false, initializing: false, error: 'Signaling server disconnected' });
     };
 
     this.ws.onerror = (error) => {
       console.error('📡 Signaling server error:', error);
-      this.updateState({ connected: false, connecting: false, error: 'Signaling server error' });
+      this.updateState({ connected: false, connecting: false, initializing: false, error: 'Signaling server error' });
     };
   }
 
@@ -138,6 +142,16 @@ export class WebRTCAssistantService {
             data: data.data,
             format: data.format || 'pcm_16000',
             timestamp: new Date()
+          });
+          break;
+          
+        case 'pipeline_ready':
+          // Pipeline is ready - transition to connected state
+          this.updateState({ 
+            connected: true, 
+            connecting: false, 
+            initializing: false,
+            error: null 
           });
           break;
           
@@ -162,7 +176,7 @@ export class WebRTCAssistantService {
           
         case 'error':
           console.error('❌ Server error:', data.message);
-          this.updateState({ connected: false, connecting: false, error: data.message });
+          this.updateState({ connected: false, connecting: false, initializing: false, error: data.message });
           break;
           
         default:
@@ -251,6 +265,7 @@ export class WebRTCAssistantService {
     this.updateState({ 
       connected: false, 
       connecting: false, 
+      initializing: false,
       error: null,
       iceConnectionState: 'closed',
       signalingState: 'closed'

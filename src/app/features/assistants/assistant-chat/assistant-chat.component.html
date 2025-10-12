@@ -10,12 +10,13 @@
         <div class="connection-status">
           <span class="status-dot" 
                 [class.connected]="isConnected"
-                [class.connecting]="isConnecting">
+                [class.connecting]="isConnecting || isInitializing">
           </span>
           <span class="status-text">
             <span *ngIf="isConnecting">Connecting...</span>
+            <span *ngIf="isInitializing">Initializing Assistant...</span>
             <span *ngIf="isConnected">Connected</span>
-            <span *ngIf="!isConnected && !isConnecting">Disconnected</span>
+            <span *ngIf="!isConnected && !isConnecting && !isInitializing">Disconnected</span>
           </span>
         </div>
       </div>
@@ -87,8 +88,19 @@
       </div>
     </div>
 
+    <!-- Connecting/Initializing State -->
+    <div class="connecting-state" *ngIf="isConnecting || isInitializing">
+      <div class="connecting-icon">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+      <h3 *ngIf="isConnecting">Connecting...</h3>
+      <h3 *ngIf="isInitializing">Initializing Assistant...</h3>
+      <p *ngIf="isConnecting">Establishing connection to assistant</p>
+      <p *ngIf="isInitializing">Setting up AI services and preparing for conversation</p>
+    </div>
+
     <!-- Disconnected State -->
-    <div class="disconnected-state" *ngIf="!isConnected && !isConnecting">
+    <div class="disconnected-state" *ngIf="!isConnected && !isConnecting && !isInitializing">
       <div class="disconnected-icon">
         <mat-icon>call_end</mat-icon>
       </div>
@@ -98,7 +110,7 @@
   </div>
 
   <!-- Call Controls -->
-  <div class="call-controls">
+  <div class="call-controls" *ngIf="isConnected">
     <button class="control-button mute-button" 
             [class.muted]="isMuted"
             (click)="toggleMute()"
