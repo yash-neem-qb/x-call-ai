@@ -4,12 +4,15 @@ import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment';
 
 export interface ChatMessage {
-  type: 'greeting' | 'audio' | 'response' | 'error' | 'pong' | 'user' | 'system';
+  type: 'greeting' | 'audio' | 'response' | 'error' | 'pong' | 'user' | 'system' | 'assistant' | 'user_streaming' | 'assistant_streaming';
   content?: string;
   data?: string; // For audio data
   format?: string; // For audio format information
   message?: string; // For error messages
   timestamp: Date;
+  id?: string; // Add ID field for proper tracking
+  isStreaming?: boolean; // Add streaming state
+  isFinal?: boolean; // Add final state for streaming
 }
 
 export interface WebSocketState {
@@ -34,6 +37,13 @@ export class AssistantChatService {
   public state$ = this.stateSubject.asObservable();
 
   constructor(private authService: AuthService) {}
+
+  /**
+   * Generate unique message ID for proper tracking
+   */
+  private generateMessageId(): string {
+    return 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+  }
 
   /**
    * Connect to assistant WebSocket
@@ -74,7 +84,8 @@ export class AssistantChatService {
                 type: 'audio',
                 data: data.data,
                 format: data.format || 'pcm_16000', // Default to browser-friendly format
-                timestamp: new Date()
+                timestamp: new Date(),
+                id: this.generateMessageId()
               };
               this.messageSubject.next(message);
             } else if (data.event === 'media' && data.media && data.media.payload) {
@@ -83,21 +94,24 @@ export class AssistantChatService {
                 type: 'audio',
                 data: data.media.payload,
                 format: 'ulaw_8000', // Legacy μ-law format
-                timestamp: new Date()
+                timestamp: new Date(),
+                id: this.generateMessageId()
               };
               this.messageSubject.next(message);
             } else if (data.event === 'start') {
               const message: ChatMessage = {
                 type: 'system',
                 content: 'Audio stream started',
-                timestamp: new Date()
+                timestamp: new Date(),
+                id: this.generateMessageId()
               };
               this.messageSubject.next(message);
             } else if (data.event === 'stop') {
               const message: ChatMessage = {
                 type: 'system',
                 content: 'Audio stream ended',
-                timestamp: new Date()
+                timestamp: new Date(),
+                id: this.generateMessageId()
               };
               this.messageSubject.next(message);
             } else {
@@ -107,7 +121,10 @@ export class AssistantChatService {
                 content: data.content,
                 data: data.data,
                 message: data.message,
-                timestamp: new Date()
+                timestamp: new Date(),
+                id: this.generateMessageId(),
+                isStreaming: data.isStreaming || false,
+                isFinal: data.isFinal || false
               };
               this.messageSubject.next(message);
             }
@@ -115,7 +132,8 @@ export class AssistantChatService {
             this.messageSubject.next({
               type: 'error',
               content: 'Error parsing message',
-              timestamp: new Date()
+              timestamp: new Date(),
+              id: this.generateMessageId()
             });
           }
         };

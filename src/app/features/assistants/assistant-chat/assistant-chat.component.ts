@@ -131,7 +131,11 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
     // Subscribe to incoming messages
     this.webrtcService.messages$.pipe(takeUntil(this.destroy$)).subscribe(message => {
-      if (!message) return; // Skip null messages
+      // Skip null or invalid messages
+      if (!message || !message.type) {
+        console.warn('Received invalid message:', message);
+        return;
+      }
       
       // Handle audio messages
       if (message.type === 'audio' && message.data) {
@@ -945,17 +949,18 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    */
   private handleUserStreamingText(text: string, isFinal: boolean): void {
     if (isFinal) {
-      // Final text - add to messages and clear streaming
+      // Final text - finalize the streaming message or create new one
       if (this.currentUserStreamingMessage) {
         this.currentUserStreamingMessage.content = text;
         this.currentUserStreamingMessage.isStreaming = false;
         this.currentUserStreamingMessage = null;
       } else {
+        // Create final message if no streaming message exists
         this.addUserMessage(text);
       }
       this.streamingTextBuffer = '';
     } else {
-      // Interim text - update streaming message
+      // Interim text - update or create streaming message
       if (!this.currentUserStreamingMessage) {
         this.currentUserStreamingMessage = {
           type: 'user',
@@ -965,7 +970,9 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           isStreaming: true
         };
         this.chatMessages.push(this.currentUserStreamingMessage);
+        this.sortMessagesByTimestamp();
       } else {
+        // Update existing streaming message content
         this.currentUserStreamingMessage.content = text;
       }
       this.scrollToBottom();
@@ -980,6 +987,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       id: this.generateMessageId()
     };
     this.chatMessages.push(message);
+    this.sortMessagesByTimestamp();
     this.scrollToBottom();
   }
 
@@ -988,12 +996,13 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    */
   private handleAssistantStreamingText(text: string, isFinal: boolean): void {
     if (isFinal) {
-      // Final text - finalize the message
+      // Final text - finalize the streaming message or create new one
       if (this.currentAssistantMessage) {
         this.currentAssistantMessage.content = text;
         this.currentAssistantMessage.isStreaming = false;
         this.currentAssistantMessage = null;
       } else {
+        // Create final message if no streaming message exists
         this.addAssistantMessage(text);
       }
     } else {
@@ -1007,7 +1016,9 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           isStreaming: true
         };
         this.chatMessages.push(this.currentAssistantMessage);
+        this.sortMessagesByTimestamp();
       } else {
+        // Update existing streaming message content
         this.currentAssistantMessage.content = text;
       }
       this.scrollToBottom();
@@ -1015,23 +1026,24 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   }
 
   addAssistantMessage(content: string, isStreaming: boolean = false): void {
-    if (isStreaming && this.currentAssistantMessage) {
-      // Update existing streaming message
-      this.currentAssistantMessage.content = content;
-      this.currentAssistantMessage.isStreaming = true;
-    } else {
-      // Create new message
-      const message: ChatMessage = {
-        type: 'assistant',
-        content: content,
-        timestamp: new Date(),
-        id: this.generateMessageId(),
-        isStreaming: isStreaming
-      };
-      this.chatMessages.push(message);
+    // Always create a new message to prevent overwriting issues
+    const message: ChatMessage = {
+      type: 'assistant',
+      content: content,
+      timestamp: new Date(),
+      id: this.generateMessageId(),
+      isStreaming: isStreaming
+    };
+    
+    this.chatMessages.push(message);
+    
+    // Only set as current if it's a streaming message
+    if (isStreaming) {
       this.currentAssistantMessage = message;
-      this.scrollToBottom();
     }
+    
+    this.sortMessagesByTimestamp();
+    this.scrollToBottom();
   }
 
   addSystemMessage(content: string): void {
@@ -1042,6 +1054,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       id: this.generateMessageId()
     };
     this.chatMessages.push(message);
+    this.sortMessagesByTimestamp();
     this.scrollToBottom();
   }
 
@@ -1058,6 +1071,15 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
   trackByMessageId(index: number, message: ChatMessage): string {
     return message.id || index.toString();
+  }
+
+  /**
+   * Sort messages by timestamp to ensure correct chronological order
+   */
+  private sortMessagesByTimestamp(): void {
+    this.chatMessages.sort((a, b) => {
+      return a.timestamp.getTime() - b.timestamp.getTime();
+    });
   }
 
   formatTime(timestamp: Date): string {
