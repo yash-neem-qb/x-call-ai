@@ -18,6 +18,7 @@ import { AssistantService, Assistant, AssistantCreate, AssistantUpdate } from '.
 import { VoiceService, Voice } from '../../core/services/voice.service';
 import { AssistantTemplateDialogComponent, AssistantTemplate } from './assistant-template-dialog/assistant-template-dialog.component';
 import { AssistantChatComponent } from './assistant-chat/assistant-chat.component';
+import { AssistantToolsComponent } from './assistant-tools/assistant-tools.component';
 
 @Component({
   selector: 'app-assistants',
@@ -34,7 +35,8 @@ import { AssistantChatComponent } from './assistant-chat/assistant-chat.componen
     MatSlideToggleModule,
     MatProgressBarModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    AssistantToolsComponent
   ],
   templateUrl: './assistants.component.html',
   styleUrls: ['./assistants.component.scss']

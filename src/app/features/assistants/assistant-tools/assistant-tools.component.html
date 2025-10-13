@@ -1,0 +1,297 @@
+<div class="tools-container">
+  <!-- Header -->
+  <div class="tools-header">
+    <div class="header-info">
+      <h3>Tools</h3>
+      <p>Configure external tools that this assistant can use during conversations</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="openAddToolDialog()" [disabled]="isLoading">
+        <mat-icon>add</mat-icon>
+        Add Existing Tool
+      </button>
+      <button mat-flat-button color="primary" (click)="openCreateToolDialog()" [disabled]="isLoading">
+        <mat-icon>create</mat-icon>
+        Create New Tool
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Loading tools...</p>
+  </div>
+
+  <!-- Tools Table -->
+  <div class="tools-content" *ngIf="!isLoading">
+    <div class="tools-table-container" *ngIf="assignedTools.length > 0">
+      <table mat-table [dataSource]="assignedTools" class="tools-table">
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Tool Name</th>
+          <td mat-cell *matCellDef="let tool">
+            <div class="tool-name">
+              <strong>{{ tool.tool.name }}</strong>
+              <span class="tool-description" *ngIf="tool.tool.description">
+                {{ tool.tool.description }}
+              </span>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Method Column -->
+        <ng-container matColumnDef="method">
+          <th mat-header-cell *matHeaderCellDef>Method</th>
+          <td mat-cell *matCellDef="let tool">
+            <mat-chip [color]="getMethodColor(tool.tool.method)" selected>
+              {{ tool.tool.method }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- URL Column -->
+        <ng-container matColumnDef="url">
+          <th mat-header-cell *matHeaderCellDef>URL</th>
+          <td mat-cell *matCellDef="let tool">
+            <span class="tool-url" [matTooltip]="tool.tool.url">
+              {{ tool.tool.url.length > 50 ? (tool.tool.url | slice:0:50) + '...' : tool.tool.url }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Enabled Column -->
+        <ng-container matColumnDef="enabled">
+          <th mat-header-cell *matHeaderCellDef>Enabled</th>
+          <td mat-cell *matCellDef="let tool">
+            <mat-checkbox 
+              [checked]="tool.is_enabled" 
+              (change)="toggleToolEnabled(tool)"
+              [color]="'primary'">
+            </mat-checkbox>
+          </td>
+        </ng-container>
+
+        <!-- Priority Column -->
+        <ng-container matColumnDef="priority">
+          <th mat-header-cell *matHeaderCellDef>Priority</th>
+          <td mat-cell *matCellDef="let tool">
+            <span class="priority-badge" [class.high]="tool.priority > 5" [class.medium]="tool.priority > 0 && tool.priority <= 5">
+              {{ tool.priority }}
+            </span>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let tool">
+            <button mat-icon-button [matMenuTriggerFor]="toolMenu" [matMenuTriggerData]="{tool: tool}">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="assignedToolsColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: assignedToolsColumns;"></tr>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="assignedTools.length === 0">
+      <div class="empty-icon">
+        <mat-icon>build</mat-icon>
+      </div>
+      <h4>No Tools Configured</h4>
+      <p>This assistant doesn't have any tools configured yet. Add tools to enable external API calls during conversations.</p>
+      <div class="empty-actions">
+        <button mat-stroked-button (click)="openAddToolDialog()">
+          <mat-icon>add</mat-icon>
+          Add Existing Tool
+        </button>
+        <button mat-flat-button color="primary" (click)="openCreateToolDialog()">
+          <mat-icon>create</mat-icon>
+          Create New Tool
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Tool Dialog -->
+<div class="dialog-overlay" *ngIf="showAddToolDialog" (click)="closeAddToolDialog()">
+  <div class="dialog-content" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Add Tool to Assistant</h3>
+      <button mat-icon-button (click)="closeAddToolDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <div class="dialog-body">
+      <div class="form-group">
+        <label>Select Tool</label>
+        <mat-select [(ngModel)]="selectedToolId" placeholder="Choose a tool">
+          <mat-option *ngFor="let tool of availableTools" [value]="tool.id">
+            <div class="tool-option">
+              <strong>{{ tool.name }}</strong>
+              <span class="tool-method">{{ tool.method }}</span>
+              <span class="tool-url">{{ tool.url }}</span>
+            </div>
+          </mat-option>
+        </mat-select>
+      </div>
+
+      <div class="form-group" *ngIf="getSelectedTool()">
+        <label>Tool Configuration</label>
+        <div class="tool-config">
+          <mat-checkbox [(ngModel)]="toolEnabled" [color]="'primary'">
+            Enable this tool for the assistant
+          </mat-checkbox>
+          
+          <div class="priority-input">
+            <label>Priority (0-10)</label>
+            <input matInput type="number" [(ngModel)]="toolPriority" min="0" max="10" placeholder="0">
+            <small>Higher priority tools are called first</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="dialog-actions">
+      <button mat-button (click)="closeAddToolDialog()">Cancel</button>
+      <button mat-flat-button color="primary" (click)="addToolToAssistant()" [disabled]="!selectedToolId">
+        Add Tool
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Tool Dialog -->
+<div class="dialog-overlay" *ngIf="showCreateToolDialog" (click)="closeCreateToolDialog()">
+  <div class="dialog-content large" (click)="$event.stopPropagation()">
+    <div class="dialog-header">
+      <h3>Create New Tool</h3>
+      <button mat-icon-button (click)="closeCreateToolDialog()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    
+    <div class="dialog-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tool Name *</label>
+          <input matInput [(ngModel)]="newTool.name" placeholder="e.g., Get Weather" required>
+        </div>
+        
+        <div class="form-group">
+          <label>HTTP Method *</label>
+          <mat-select [(ngModel)]="newTool.method" (selectionChange)="onMethodChange()">
+            <mat-option value="GET">GET</mat-option>
+            <mat-option value="POST">POST</mat-option>
+            <mat-option value="PUT">PUT</mat-option>
+            <mat-option value="DELETE">DELETE</mat-option>
+            <mat-option value="PATCH">PATCH</mat-option>
+          </mat-select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea matInput [(ngModel)]="newTool.description" placeholder="Describe what this tool does" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>URL *</label>
+        <input matInput [(ngModel)]="newTool.url" placeholder="https://api.example.com/endpoint" required>
+      </div>
+
+      <!-- Parameters Section - Show for GET, DELETE, and other methods that use query params -->
+      <div class="form-group" *ngIf="shouldShowParameters()">
+        <label>Parameters</label>
+        <div class="parameters-container">
+          <div class="parameter-item" *ngFor="let param of newTool.parameters; let i = index">
+            <div class="parameter-row">
+              <input matInput [(ngModel)]="param.name" placeholder="Parameter name" class="param-name">
+              <mat-select [(ngModel)]="param.type" class="param-type">
+                <mat-option value="string">String</mat-option>
+                <mat-option value="number">Number</mat-option>
+                <mat-option value="boolean">Boolean</mat-option>
+              </mat-select>
+              <mat-checkbox [(ngModel)]="param.required" class="param-required">Required</mat-checkbox>
+              <button mat-icon-button (click)="removeParameter(i)" class="remove-param">
+                <mat-icon>remove</mat-icon>
+              </button>
+            </div>
+            <input matInput [(ngModel)]="param.description" placeholder="Parameter description" class="param-description">
+          </div>
+          <button mat-button (click)="addParameter()" class="add-param-btn">
+            <mat-icon>add</mat-icon>
+            Add Parameter
+          </button>
+        </div>
+        <small>Parameters will be added as query string for GET requests</small>
+      </div>
+
+      <!-- Request Body Section - Show for POST, PUT, PATCH -->
+      <div class="form-group" *ngIf="shouldShowRequestBody()">
+        <label>Request Body Schema</label>
+        <textarea matInput [(ngModel)]="newTool.body_schema" 
+                  placeholder='{"key": "value", "number": 123}' 
+                  rows="4" 
+                  class="json-textarea"></textarea>
+        <small>JSON schema for request body. Use {{parameter_name}} for dynamic values from conversation.</small>
+      </div>
+
+      <!-- Headers Section -->
+      <div class="form-group">
+        <label>Custom Headers</label>
+        <div class="headers-container">
+          <div class="header-item" *ngFor="let header of newTool.headers; let i = index">
+            <div class="header-row">
+              <input matInput [(ngModel)]="header.key" placeholder="Header name" class="header-key">
+              <input matInput [(ngModel)]="header.value" placeholder="Header value" class="header-value">
+              <button mat-icon-button (click)="removeHeader(i)" class="remove-header">
+                <mat-icon>remove</mat-icon>
+              </button>
+            </div>
+          </div>
+          <button mat-button (click)="addHeader()" class="add-header-btn">
+            <mat-icon>add</mat-icon>
+            Add Header
+          </button>
+        </div>
+        <small>Optional custom headers (e.g., Authorization, Content-Type)</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Timeout (seconds)</label>
+          <input matInput type="number" [(ngModel)]="newTool.timeout_seconds" min="1" max="300">
+        </div>
+        
+        <div class="form-group">
+          <label>Retry Count</label>
+          <input matInput type="number" [(ngModel)]="newTool.retry_count" min="0" max="10">
+        </div>
+      </div>
+    </div>
+    
+    <div class="dialog-actions">
+      <button mat-button (click)="closeCreateToolDialog()">Cancel</button>
+      <button mat-flat-button color="primary" (click)="createTool()" [disabled]="!newTool.name || !newTool.url">
+        Create Tool
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Tool Actions Menu -->
+<mat-menu #toolMenu="matMenu">
+  <ng-template matMenuContent let-tool="tool">
+    <button mat-menu-item (click)="removeToolFromAssistant(tool)">
+      <mat-icon>remove</mat-icon>
+      <span>Remove from Assistant</span>
+    </button>
+  </ng-template>
+</mat-menu>

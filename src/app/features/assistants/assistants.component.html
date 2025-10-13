@@ -364,32 +364,7 @@
           </section>
 
           <section class="panel" *ngSwitchCase="'tools'">
-            <header class="panel-header-row">
-              <div>
-                <h2>Tools</h2>
-                <p>Tools enable voicebots to perform actions during calls.</p>
-              </div>
-            </header>
-            <div class="panel-body">
-              <div class="tool-card">
-                <div class="tool-header">
-                  <div class="tool-title">Appointment Scheduling</div>
-                  <mat-slide-toggle color="primary"></mat-slide-toggle>
-                </div>
-                <p>Allow the assistant to schedule appointments in your calendar system.</p>
-              </div>
-              <div class="tool-card">
-                <div class="tool-header">
-                  <div class="tool-title">Contact Information Collection</div>
-                  <mat-slide-toggle color="primary"></mat-slide-toggle>
-                </div>
-                <p>Allow the assistant to collect and store contact information.</p>
-              </div>
-              <button mat-stroked-button color="primary">
-                <mat-icon>add</mat-icon>
-                <span>Add Custom Function</span>
-              </button>
-            </div>
+            <app-assistant-tools [assistant]="selectedAssistant"></app-assistant-tools>
           </section>
 
           <section class="panel" *ngSwitchCase="'analysis'">

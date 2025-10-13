@@ -1,0 +1,518 @@
+.tools-container {
+  padding: 24px;
+  background: #0f0f0f;
+  border-radius: 8px;
+  color: #fff;
+}
+
+.tools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #222;
+
+  .header-info {
+    h3 {
+      margin: 0 0 4px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    p {
+      margin: 0;
+      color: #999;
+      font-size: 14px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: #999;
+
+  p {
+    margin-top: 16px;
+    font-size: 14px;
+  }
+}
+
+.tools-content {
+  .tools-table-container {
+    overflow-x: auto;
+  }
+
+  .tools-table {
+    width: 100%;
+    background: #0f0f0f;
+
+    th {
+      font-weight: 600;
+      color: #fff;
+      border-bottom: 2px solid #222;
+    }
+
+    td {
+      border-bottom: 1px solid #222;
+    }
+
+    .tool-name {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      strong {
+        font-size: 14px;
+        color: #fff;
+      }
+
+      .tool-description {
+        font-size: 12px;
+        color: #999;
+        line-height: 1.4;
+      }
+    }
+
+    .tool-url {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      color: #999;
+      background: #1a1a1a;
+      padding: 2px 6px;
+      border-radius: 4px;
+      max-width: 200px;
+      display: inline-block;
+    }
+
+    .priority-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #333;
+      color: #999;
+
+      &.high {
+        background: #4a1a1a;
+        color: #ff6b6b;
+      }
+
+      &.medium {
+        background: #4a3a1a;
+        color: #ffa726;
+      }
+    }
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+
+  .empty-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+
+    mat-icon {
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
+      color: #666;
+    }
+  }
+
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  p {
+    margin: 0 0 24px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .empty-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+}
+
+// Dialog Styles
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.dialog-content {
+  background: #0f0f0f;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #fff;
+
+  &.large {
+    max-width: 700px;
+  }
+
+  .dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #222;
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #fff;
+    }
+  }
+
+  .dialog-body {
+    padding: 24px;
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+      }
+
+      input, textarea, mat-select {
+        width: 100%;
+        background-color: #1a1a1a !important;
+        color: #fff !important;
+        border: 1px solid #333 !important;
+        border-radius: 4px !important;
+        
+        &::placeholder {
+          color: #666 !important;
+        }
+        
+        &:focus {
+          border-color: var(--primary-color) !important;
+          outline: none !important;
+          box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+        }
+      }
+      
+      // Specific styling for Material inputs
+      .mat-mdc-form-field {
+        .mat-mdc-text-field-wrapper {
+          background-color: #1a1a1a !important;
+          border: 1px solid #333 !important;
+          border-radius: 4px !important;
+        }
+        
+        .mat-mdc-form-field-focus-overlay {
+          background-color: transparent !important;
+        }
+        
+        .mat-mdc-input-element {
+          color: #fff !important;
+          
+          &::placeholder {
+            color: #666 !important;
+          }
+        }
+        
+        .mat-mdc-form-field-label {
+          color: #999 !important;
+        }
+        
+        &.mat-focused .mat-mdc-form-field-label {
+          color: var(--primary-color) !important;
+        }
+      }
+      
+      // Material select styling
+      .mat-mdc-select {
+        background-color: #1a1a1a !important;
+        color: #fff !important;
+        border: 1px solid #333 !important;
+        border-radius: 4px !important;
+        
+        .mat-mdc-select-trigger {
+          background-color: #1a1a1a !important;
+          color: #fff !important;
+        }
+        
+        .mat-mdc-select-value {
+          color: #fff !important;
+        }
+        
+        .mat-mdc-select-arrow {
+          color: #999 !important;
+        }
+      }
+
+        .tool-config {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding: 16px;
+          background: #1a1a1a;
+          border-radius: 6px;
+
+        .priority-input {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          input {
+            max-width: 100px;
+          }
+
+          small {
+            font-size: 12px;
+            color: #999;
+          }
+        }
+      }
+    }
+  }
+
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid #222;
+    background: #1a1a1a;
+  }
+}
+
+.tool-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .tool-method {
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
+  }
+
+  .tool-url {
+    font-size: 11px;
+    color: #666;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  }
+}
+
+// Parameters and Headers styling
+.parameters-container, .headers-container {
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px;
+  background: #1a1a1a;
+  margin-bottom: 8px;
+
+  .parameter-item, .header-item {
+    margin-bottom: 12px;
+    padding: 8px;
+    background: #0f0f0f;
+    border-radius: 4px;
+    border: 1px solid #222;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .parameter-row, .header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .param-name, .header-key, .header-value {
+      flex: 1;
+      min-width: 120px;
+      background-color: #0f0f0f !important;
+      color: #fff !important;
+      border: 1px solid #333 !important;
+      border-radius: 4px !important;
+      padding: 8px !important;
+      
+      &::placeholder {
+        color: #666 !important;
+      }
+      
+      &:focus {
+        border-color: var(--primary-color) !important;
+        outline: none !important;
+        box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+      }
+    }
+
+    .param-type {
+      min-width: 100px;
+      background-color: #0f0f0f !important;
+      color: #fff !important;
+      border: 1px solid #333 !important;
+      border-radius: 4px !important;
+    }
+
+    .param-required {
+      min-width: 100px;
+      color: #fff !important;
+    }
+
+    .header-value {
+      min-width: 150px;
+    }
+
+    .remove-param, .remove-header {
+      color: #ff6b6b;
+      min-width: 40px;
+    }
+  }
+
+  .param-description {
+    width: 100%;
+    margin-top: 4px;
+    background-color: #0f0f0f !important;
+    color: #fff !important;
+    border: 1px solid #333 !important;
+    border-radius: 4px !important;
+    padding: 8px !important;
+    
+    &::placeholder {
+      color: #666 !important;
+    }
+    
+    &:focus {
+      border-color: var(--primary-color) !important;
+      outline: none !important;
+      box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+    }
+  }
+
+  .add-param-btn, .add-header-btn {
+    width: 100%;
+    border: 1px dashed #333;
+    color: #999;
+    margin-top: 8px;
+
+    &:hover {
+      border-color: var(--primary-color);
+      color: var(--primary-color);
+    }
+  }
+}
+
+.json-textarea {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: #0f0f0f !important;
+  color: #fff !important;
+  border: 1px solid #333 !important;
+  border-radius: 4px !important;
+  padding: 12px !important;
+  
+  &::placeholder {
+    color: #666 !important;
+  }
+  
+  &:focus {
+    border-color: var(--primary-color) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2) !important;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .tools-container {
+    padding: 16px;
+  }
+
+  .tools-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+
+    .header-actions {
+      justify-content: stretch;
+
+      button {
+        flex: 1;
+      }
+    }
+  }
+
+  .dialog-content {
+    margin: 10px;
+    max-height: calc(100vh - 20px);
+
+    .dialog-body .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .empty-actions {
+    flex-direction: column;
+    align-items: center;
+
+    button {
+      width: 100%;
+      max-width: 200px;
+    }
+  }
+}
