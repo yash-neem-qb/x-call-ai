@@ -166,20 +166,14 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    * Check browser audio capabilities and log information
    */
   private checkAudioCapabilities(): void {
-    console.log('🎵 Checking browser audio capabilities...');
-    
     // Check Web Audio API support
-    if (window.AudioContext || (window as any).webkitAudioContext) {
-      console.log('✅ Web Audio API supported');
-    } else {
+    if (!(window.AudioContext || (window as any).webkitAudioContext)) {
       console.error('❌ Web Audio API not supported');
       this.snackBar.open('Web Audio API not supported in this browser', 'Close', { duration: 5000 });
     }
     
     // Check MediaDevices API support
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      console.log('✅ MediaDevices API supported');
-    } else {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
       console.error('❌ MediaDevices API not supported');
       this.snackBar.open('MediaDevices API not supported in this browser', 'Close', { duration: 5000 });
     }
@@ -188,7 +182,6 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
       navigator.mediaDevices.enumerateDevices().then(devices => {
         const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
-        console.log('🎵 Available audio output devices:', audioOutputs.length);
         if (audioOutputs.length === 0) {
           console.warn('⚠️ No audio output devices found');
           this.snackBar.open('No speakers/headphones detected', 'Close', { duration: 3000 });
@@ -208,13 +201,9 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           sampleRate: 16000,
           latencyHint: 'interactive'
         });
-        console.log('Recording audio context initialized, state:', this.audioContext.state);
-        
         // Resume context if suspended
         if (this.audioContext.state === 'suspended') {
-          console.log('Recording audio context suspended, attempting to resume...');
           await this.audioContext.resume();
-          console.log('Recording audio context resumed, state:', this.audioContext.state);
         }
       }
 
@@ -224,13 +213,9 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
           sampleRate: 44100, // Higher sample rate for better playback quality
           latencyHint: 'playback'
         });
-        console.log('Playback audio context initialized, state:', this.playbackAudioContext.state);
-        
         // Resume context if suspended
         if (this.playbackAudioContext.state === 'suspended') {
-          console.log('Playback audio context suspended, attempting to resume...');
           await this.playbackAudioContext.resume();
-          console.log('Playback audio context resumed, state:', this.playbackAudioContext.state);
         }
       }
     } catch (error) {
@@ -249,8 +234,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
         const audioInputs = devices.filter(device => device.kind === 'audioinput');
         const audioOutputs = devices.filter(device => device.kind === 'audiooutput');
         
-        console.log('Available audio input devices:', audioInputs);
-        console.log('Available audio output devices:', audioOutputs);
+        // Audio devices enumerated successfully
         
         if (audioInputs.length === 0) {
           this.snackBar.open('No microphone found. Please connect a microphone.', 'Close', { duration: 5000 });
@@ -265,7 +249,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log('🧹 Component destroying - performing comprehensive cleanup');
+    // Component destroying - performing comprehensive cleanup
     
     this.destroy$.next();
     this.destroy$.complete();
@@ -295,7 +279,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     this.currentCallId = null;
     this.callStartTime = null;
     
-    console.log('🧹 Component cleanup completed');
+    // Component cleanup completed
   }
 
   /**
@@ -307,7 +291,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     try {
       const success = await this.webrtcService.connectToAssistant(this.assistant.id);
       if (success) {
-        console.log('Connected to assistant via WebRTC');
+        // Connected to assistant via WebRTC
         this.snackBar.open('Connected to assistant', 'Close', { duration: 2000 });
       } else {
         console.error('Failed to connect to assistant');
@@ -335,7 +319,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       
       // Ensure playback context is ready for audio output
       if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
-        console.log('🎵 Resuming playback context for future audio...');
+        // Resuming playback context for future audio
         await this.playbackAudioContext.resume();
       }
       
@@ -377,7 +361,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
         // Check if muted - if so, don't send audio but keep processing
         if (this.isMuted) {
-          console.log('🎤 Audio chunk muted - not sending to assistant');
+          // Audio chunk muted - not sending to assistant
           return;
         }
 
@@ -402,7 +386,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       processor.connect(this.audioContext.destination);
       
       this.isStreaming = true;
-      console.log('🎤 Audio streaming started');
+      // Audio streaming started
 
     } catch (error) {
       console.error('Error starting audio streaming:', error);
@@ -531,10 +515,10 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     this.isMuted = !this.isMuted;
     
     if (this.isMuted) {
-      console.log('🎤 Microphone muted - WebSocket stays connected');
+      // Microphone muted - WebSocket stays connected
       this.snackBar.open('Microphone muted', 'Close', { duration: 1500 });
     } else {
-      console.log('🎤 Microphone unmuted - WebSocket stays connected');
+      // Microphone unmuted - WebSocket stays connected
       this.snackBar.open('Microphone unmuted', 'Close', { duration: 1500 });
     }
   }
@@ -553,7 +537,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
     // Add audio to queue
     this.audioQueue.push({ data: base64Audio, format });
-    console.log(`🎵 Audio chunk queued. Queue length: ${this.audioQueue.length}`);
+    // Audio chunk queued
     
     // Start processing queue if not already playing
     if (!this.isPlayingAudio) {
@@ -579,7 +563,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     }
 
     try {
-      console.log(`🎵 Playing audio chunk. Remaining in queue: ${this.audioQueue.length}`);
+      // Playing audio chunk
       
       // Play audio and wait for it to complete
       await this.playAudioWithWebAudio(audioItem.data, audioItem.format);
@@ -605,7 +589,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    * Clear audio queue and stop any currently playing audio
    */
   private clearAudioQueue(): void {
-    console.log('🎵 Clearing audio queue and stopping playback');
+    // Clearing audio queue and stopping playback
     
     // Stop any currently playing audio
     if (this.currentAudioSource) {
@@ -639,7 +623,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     if (this.audioStream) {
       this.audioStream.getTracks().forEach(track => {
         track.stop();
-        console.log('🎵 Audio track stopped:', track.kind);
+        // Audio track stopped
       });
       this.audioStream = null;
     }
@@ -647,7 +631,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     // Clear any pending audio processing
     this.isStreaming = false;
     
-    console.log('🎵 Audio queue and streams cleared completely');
+    // Audio queue and streams cleared completely
   }
 
   /**
@@ -664,14 +648,14 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    * Comprehensive AudioContext cleanup
    */
   private cleanupAudioContexts(): void {
-    console.log('🎵 Cleaning up AudioContexts');
+    // Cleaning up AudioContexts
     
     // Close recording AudioContext
     if (this.audioContext) {
       try {
         if (this.audioContext.state !== 'closed') {
           this.audioContext.close();
-          console.log('🎵 Recording AudioContext closed');
+          // Recording AudioContext closed
         }
       } catch (e) {
         console.warn('Error closing recording AudioContext:', e);
@@ -684,7 +668,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       try {
         if (this.playbackAudioContext.state !== 'closed') {
           this.playbackAudioContext.close();
-          console.log('🎵 Playback AudioContext closed');
+          // Playback AudioContext closed
         }
       } catch (e) {
         console.warn('Error closing playback AudioContext:', e);
@@ -696,7 +680,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     this.audioQueue = [];
     this.audioChunks = [];
     
-    console.log('🎵 AudioContext cleanup completed');
+    // AudioContext cleanup completed
   }
 
   private async playAudioWithWebAudio(base64Audio: string, format: string): Promise<void> {
@@ -709,9 +693,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
     // Always resume playback context before playing audio
     if (this.playbackAudioContext && this.playbackAudioContext.state === 'suspended') {
-      console.log('🎵 Playback audio context suspended, resuming...');
       await this.playbackAudioContext.resume();
-      console.log('🎵 Playback audio context resumed, state:', this.playbackAudioContext.state);
     }
 
         // Stop any currently playing audio
@@ -768,7 +750,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
         
         // Set up event handlers
         source.onended = () => {
-          console.log('🎵 Audio chunk finished playing');
+          // Audio chunk finished playing
           this.currentAudioSource = null;
           resolve(); // Resolve promise when audio finishes
         };
@@ -786,7 +768,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
   private async playAudioWithFallback(base64Audio: string, format: string): Promise<void> {
     try {
-      console.log('🎵 Using fallback audio playback method...');
+      // Using fallback audio playback method
       
       // Create a simple audio context for fallback
       const fallbackContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -808,7 +790,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       oscillator.start();
       oscillator.stop(fallbackContext.currentTime + 0.2);
       
-      console.log('🎵 Fallback audio played (beep)');
+      // Fallback audio played (beep)
       
     } catch (error) {
       console.error('🎵 Fallback audio also failed:', error);
@@ -849,7 +831,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
    * Hang up the call with comprehensive cleanup
    */
   hangup(): void {
-    console.log('📞 Hanging up call with comprehensive cleanup');
+    // Hanging up call with comprehensive cleanup
     
     // Clear audio queue and stop any playing audio
     this.clearAudioQueue();
@@ -874,7 +856,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     // Close dialog
     this.dialogRef.close();
     
-    console.log('📞 Call hung up with full cleanup');
+    // Call hung up with full cleanup
   }
 
   /**
@@ -916,7 +898,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
 
     this.http.put(`/api/call-logs/${this.currentCallId}`, endData).subscribe({
       next: (response: any) => {
-        console.log('Call end logged:', response);
+        // Call end logged successfully
         this.currentCallId = null;
       },
       error: (error) => {
@@ -1108,7 +1090,7 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
   }
 
   endCall(): void {
-    console.log('📞 Ending call with comprehensive cleanup');
+    // Ending call with comprehensive cleanup
     
     // Clear audio queue and stop any playing audio
     this.clearAudioQueue();
@@ -1133,6 +1115,6 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
     // Close dialog
     this.dialogRef.close();
     
-    console.log('📞 Call ended with full cleanup');
+    // Call ended with full cleanup
   }
 }

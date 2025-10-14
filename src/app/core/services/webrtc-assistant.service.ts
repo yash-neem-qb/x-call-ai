@@ -180,7 +180,7 @@ export class WebRTCAssistantService {
           break;
           
         default:
-          console.log('📡 Unknown signaling message:', data.type);
+          // Unknown signaling message type
       }
     } catch (error) {
       console.error('❌ Error handling signaling message:', error);
@@ -233,20 +233,20 @@ export class WebRTCAssistantService {
    * Disconnect from assistant and clear all audio resources
    */
   disconnect(): void {
-    console.log('🔌 WebRTC disconnecting - clearing all audio resources');
+    // WebRTC disconnecting - clearing all audio resources
     
     // Close WebSocket connection
     if (this.ws) {
       this.ws.close();
       this.ws = null;
-      console.log('🔌 WebSocket connection closed');
+      // WebSocket connection closed
     }
     
     // Stop and clear local stream
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
         track.stop();
-        console.log('🔌 Audio track stopped:', track.kind);
+        // Audio track stopped
       });
       this.localStream = null;
     }
@@ -255,7 +255,7 @@ export class WebRTCAssistantService {
     if (this.pc) {
       this.pc.close();
       this.pc = null;
-      console.log('🔌 RTCPeerConnection closed');
+      // RTCPeerConnection closed
     }
     
     // Clear any pending audio data or buffers
@@ -271,7 +271,7 @@ export class WebRTCAssistantService {
       signalingState: 'closed'
     });
     
-    console.log('🔌 WebRTC disconnect completed with full audio cleanup');
+    // WebRTC disconnect completed with full audio cleanup
   }
 
   /**
