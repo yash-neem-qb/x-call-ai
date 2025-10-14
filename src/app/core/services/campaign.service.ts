@@ -17,12 +17,6 @@ export interface Campaign {
   created_at: string;
   updated_at: string;
   contacts?: CampaignContact[];
-  stats?: {
-    total_calls: number;
-    success_rate: number;
-    total_duration: number;
-    total_cost: number;
-  };
 }
 
 export interface CampaignCreate {
@@ -52,11 +46,6 @@ export interface CampaignContact {
   phone_number: string;
   name?: string;
   email?: string;
-  custom_field_1?: string;
-  custom_field_2?: string;
-  custom_field_3?: string;
-  custom_field_4?: string;
-  custom_field_5?: string;
   status: 'pending' | 'called' | 'completed' | 'failed' | 'skipped';
   call_attempts: number;
   last_call_attempt?: string;
@@ -69,22 +58,12 @@ export interface CampaignContactCreate {
   phone_number: string;
   name?: string;
   email?: string;
-  custom_field_1?: string;
-  custom_field_2?: string;
-  custom_field_3?: string;
-  custom_field_4?: string;
-  custom_field_5?: string;
 }
 
 export interface CampaignContactUpdate {
   phone_number?: string;
   name?: string;
   email?: string;
-  custom_field_1?: string;
-  custom_field_2?: string;
-  custom_field_3?: string;
-  custom_field_4?: string;
-  custom_field_5?: string;
   status?: 'pending' | 'called' | 'completed' | 'failed' | 'skipped';
 }
 

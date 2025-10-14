@@ -131,14 +131,20 @@
             </div>
           </mat-radio-group>
 
-          <mat-form-field appearance="outline" 
-                          class="full-width schedule-field" 
-                          *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
-            <mat-label>Schedule Date & Time</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="scheduled_at">
-            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-          </mat-form-field>
+          <!-- Date and Time Picker for Scheduled Campaigns -->
+          <div class="schedule-datetime" *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Date</mat-label>
+              <input matInput [matDatepicker]="datePicker" formControlName="scheduled_date" placeholder="Choose date">
+              <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+              <mat-datepicker #datePicker></mat-datepicker>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Time</mat-label>
+              <input matInput type="time" formControlName="scheduled_time" placeholder="Choose time">
+            </mat-form-field>
+          </div>
         </div>
       </div>
     </form>

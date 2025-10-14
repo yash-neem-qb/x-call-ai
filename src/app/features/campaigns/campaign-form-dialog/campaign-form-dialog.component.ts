@@ -89,23 +89,16 @@ export class CampaignFormDialogComponent implements OnInit {
       
       // Scheduling
       schedule_type: ['NOW', Validators.required],
+      scheduled_date: [null],
+      scheduled_time: [null],
       scheduled_at: [null],
-      
-      // Advanced Settings
-      max_calls_per_hour: [50, [Validators.min(1), Validators.max(1000)]],
-      retry_failed_calls: [true],
-      max_retries: [3, [Validators.min(0), Validators.max(10)]],
-      retry_delay_minutes: [30, [Validators.min(5), Validators.max(1440)]],
       
       // CSV Upload
       csv_file: [null],
       csv_headers: this.fb.group({
         phone_number: ['phone_number'],
         name: ['name'],
-        email: ['email'],
-        custom_field_1: [''],
-        custom_field_2: [''],
-        custom_field_3: ['']
+        email: ['email']
       })
     });
   }
@@ -114,12 +107,24 @@ export class CampaignFormDialogComponent implements OnInit {
    * Populate form with existing campaign data
    */
   private populateForm(campaign: Campaign): void {
+    // Parse scheduled_at if it exists
+    let scheduled_date = null;
+    let scheduled_time = null;
+    
+    if (campaign.scheduled_at) {
+      const date = new Date(campaign.scheduled_at);
+      scheduled_date = date;
+      scheduled_time = date.toTimeString().slice(0, 5); // HH:MM format
+    }
+    
     this.campaignForm.patchValue({
       name: campaign.name,
       description: campaign.description,
       assistant_id: campaign.assistant_id,
       phone_number_id: campaign.phone_number_id,
-      schedule_type: campaign.schedule_type || 'NOW'
+      schedule_type: campaign.schedule_type || 'NOW',
+      scheduled_date: scheduled_date,
+      scheduled_time: scheduled_time
     });
   }
 
@@ -144,11 +149,23 @@ export class CampaignFormDialogComponent implements OnInit {
   private getFormData(): CampaignCreate | CampaignUpdate {
     const formValue = this.campaignForm.value;
     
+    // Handle scheduling logic
+    let scheduled_at = null;
+    if (formValue.schedule_type === 'SCHEDULED' && formValue.scheduled_date && formValue.scheduled_time) {
+      // Combine date and time into a proper datetime
+      const date = new Date(formValue.scheduled_date);
+      const [hours, minutes] = formValue.scheduled_time.split(':');
+      date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      scheduled_at = date.toISOString();
+    }
+    
     const baseData = {
       name: formValue.name,
       description: formValue.description,
       assistant_id: formValue.assistant_id,
-      phone_number_id: formValue.phone_number_id
+      phone_number_id: formValue.phone_number_id,
+      schedule_type: formValue.schedule_type,
+      scheduled_at: scheduled_at
     };
 
     if (this.data.mode === 'create') {

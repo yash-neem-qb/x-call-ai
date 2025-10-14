@@ -21,12 +21,6 @@ import { CampaignService, Campaign, CampaignCreate, CampaignUpdate } from '../..
 import { AssistantService, Assistant } from '../../core/services/assistant.service';
 import { PhoneService, PhoneNumber, ApiPhoneNumber } from '../../core/services/phone.service';
 
-export interface CampaignStats {
-  total: number;
-  active: number;
-  completed: number;
-  paused: number;
-}
 
 @Component({
   selector: 'app-campaigns',
@@ -73,25 +67,9 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   activeTab = 'overview';
   configTabs = [
     { id: 'overview', label: 'Overview' },
-    { id: 'contacts', label: 'Contacts' },
-    { id: 'settings', label: 'Settings' }
+    { id: 'contacts', label: 'Contacts' }
   ];
   
-  // Campaign stats
-  campaignStats = {
-    totalCalls: 0,
-    successRate: 0,
-    avgDuration: 0,
-    totalCost: 0
-  };
-  
-  // Stats
-  stats: CampaignStats = {
-    total: 0,
-    active: 0,
-    completed: 0,
-    paused: 0
-  };
   
   private destroy$ = new Subject<void>();
 
@@ -136,7 +114,6 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.campaigns = response.items;
-          this.calculateStats();
           this.isLoading = false;
         },
         error: (err) => {
@@ -179,17 +156,6 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       });
   }
 
-  /**
-   * Calculate campaign statistics
-   */
-  calculateStats(): void {
-    this.stats = {
-      total: this.campaigns.length,
-      active: this.campaigns.filter(c => c.status === 'ACTIVE').length,
-      completed: this.campaigns.filter(c => c.status === 'COMPLETED').length,
-      paused: this.campaigns.filter(c => c.status === 'PAUSED').length
-    };
-  }
 
   /**
    * Set active tab in configuration panel
@@ -329,7 +295,6 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         .subscribe({
           next: () => {
             this.campaigns = this.campaigns.filter(c => c.id !== campaign.id);
-            this.calculateStats();
             this.snackBar.open('Campaign deleted successfully', 'Close', { duration: 3000 });
           },
           error: (err) => {
@@ -354,7 +319,6 @@ export class CampaignsComponent implements OnInit, OnDestroy {
           const index = this.campaigns.findIndex(c => c.id === campaign.id);
           if (index !== -1) {
             this.campaigns[index] = updatedCampaign;
-            this.calculateStats();
             this.snackBar.open(`Campaign ${newStatus} successfully`, 'Close', { duration: 3000 });
           }
         },
