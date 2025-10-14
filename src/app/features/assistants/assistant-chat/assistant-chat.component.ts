@@ -159,7 +159,43 @@ export class AssistantChatComponent implements OnInit, OnDestroy {
       else if (message.type === 'system' && message.content) {
         this.addSystemMessage(message.content);
       }
+      // Handle call end notification
+      else if (message.type === 'call_ended') {
+        this.handleCallEnded(message.reason, message.content);
+      }
     });
+  }
+
+  /**
+   * Handle call end notification
+   */
+  private handleCallEnded(reason: string, message: string): void {
+    console.log('📞 Call ended:', reason, message);
+    
+    // Update call state
+    this.isConnected = false;
+    this.isConnecting = false;
+    this.isInitializing = false;
+    
+    // Stop call duration timer
+    if (this.durationInterval) {
+      clearInterval(this.durationInterval);
+      this.durationInterval = null;
+    }
+    
+    // Add call ended message to chat
+    this.addSystemMessage(`Call ended: ${message}`);
+    
+    // Show success toast
+    this.showSuccessToast = true;
+    setTimeout(() => {
+      this.showSuccessToast = false;
+    }, 3000);
+    
+    // Close the chat after a short delay
+    setTimeout(() => {
+      this.closeChat.emit();
+    }, 2000);
   }
 
   /**

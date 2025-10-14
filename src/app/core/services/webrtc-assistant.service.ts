@@ -13,11 +13,12 @@ export interface WebRTCState {
 }
 
 export interface ChatMessage {
-  type: 'audio' | 'text' | 'system' | 'error' | 'user' | 'assistant' | 'user_streaming' | 'assistant_streaming';
+  type: 'audio' | 'text' | 'system' | 'error' | 'user' | 'assistant' | 'user_streaming' | 'assistant_streaming' | 'call_ended';
   content?: string;
   data?: string;
   format?: string;
   message?: string;
+  reason?: string; // For call_ended messages
   timestamp: Date;
   id?: string;
   isStreaming?: boolean;
@@ -171,6 +172,24 @@ export class WebRTCAssistantService {
             content: data.content,
             timestamp: new Date(),
             isFinal: data.isFinal || false
+          });
+          break;
+          
+        case 'call_ended':
+          // Handle call end notification
+          console.log('📞 Call ended:', data.reason);
+          this.messageSubject.next({
+            type: 'call_ended',
+            content: data.message || 'Call has ended',
+            reason: data.reason,
+            timestamp: new Date()
+          });
+          // Update state to disconnected
+          this.updateState({ 
+            connected: false, 
+            connecting: false, 
+            initializing: false, 
+            error: null 
           });
           break;
           
