@@ -152,7 +152,7 @@ export class KnowledgeBaseService {
   deleteFile(fileId: string): Observable<any> {
     const organizationId = this.getOrganizationId();
     return this.http.delete(
-      `${this.baseUrl}/organizations/${organizationId}/knowledge-base/files/${fileId}`,
+      `${this.baseUrl}/organizations/${organizationId}/knowledge-base/${fileId}`,
       {
         headers: this.getAuthHeaders()
       }
