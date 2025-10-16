@@ -33,7 +33,9 @@
             <span class="contact-count">{{ campaign.contacts?.length || 0 }} contacts</span>
           </div>
         </div>
-        <button mat-icon-button class="campaign-menu" (click)="openCampaignMenu(campaign, $event)">
+        <button mat-icon-button class="campaign-menu" 
+                [matMenuTriggerFor]="campaignMenu" 
+                (click)="openCampaignMenu(campaign, $event); $event.stopPropagation()">
           <mat-icon>more_vert</mat-icon>
         </button>
       </div>
@@ -234,7 +236,7 @@
         <div class="upload-section">
           <div class="upload-header">
             <label>Upload CSV</label>
-            <a href="#" class="download-template">
+            <a href="#" class="download-template" (click)="downloadTemplate()">
               <mat-icon>download</mat-icon>
               Download template
             </a>
@@ -278,6 +280,57 @@
               </mat-radio-button>
             </mat-radio-group>
           </div>
+          
+          <!-- Date and Time Picker for Scheduled Campaigns -->
+          <div *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'" class="schedule-datetime">
+            <div class="schedule-header">
+              <label>Start at:</label>
+            </div>
+            <div class="schedule-fields">
+              <!-- Date Field -->
+              <div class="schedule-field">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Date</mat-label>
+                  <input matInput 
+                         [matDatepicker]="datePicker" 
+                         formControlName="schedule_date"
+                         placeholder="Today">
+                  <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #datePicker></mat-datepicker>
+                </mat-form-field>
+              </div>
+              
+              <!-- Time Field -->
+              <div class="schedule-field">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Time</mat-label>
+                  <input matInput 
+                         type="time"
+                         formControlName="schedule_time"
+                         placeholder="12:50 PM">
+                  <mat-icon matSuffix>access_time</mat-icon>
+                </mat-form-field>
+              </div>
+              
+              <!-- Timezone Field -->
+              <div class="schedule-field">
+                <mat-form-field appearance="outline" class="form-field">
+                  <mat-label>Timezone</mat-label>
+                  <mat-select formControlName="schedule_timezone">
+                    <mat-option value="Asia/Calcutta">Asia/Calcutta (GMT+5:30)</mat-option>
+                    <mat-option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</mat-option>
+                    <mat-option value="UTC">UTC (GMT+0:00)</mat-option>
+                    <mat-option value="America/New_York">America/New_York (GMT-5:00)</mat-option>
+                    <mat-option value="America/Los_Angeles">America/Los_Angeles (GMT-8:00)</mat-option>
+                    <mat-option value="Europe/London">Europe/London (GMT+0:00)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+            <mat-error *ngIf="campaignForm.get('schedule_date')?.hasError('required') || campaignForm.get('schedule_time')?.hasError('required')">
+              Date and time are required for scheduled campaigns
+            </mat-error>
+          </div>
         </div>
 
         <!-- CSV Preview -->
@@ -287,12 +340,16 @@
             <table>
               <thead>
                 <tr>
-                  <th *ngFor="let header of getObjectKeys(csvData[0])">{{ header }}</th>
+                  <th>Phone Number</th>
+                  <th>Name</th>
+                  <th>Email</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let row of csvData.slice(0, 5)">
-                  <td *ngFor="let value of getObjectValues(row)">{{ value }}</td>
+                  <td>{{ row.phone_number || 'N/A' }}</td>
+                  <td>{{ row.name || 'N/A' }}</td>
+                  <td>{{ row.email || 'N/A' }}</td>
                 </tr>
               </tbody>
             </table>

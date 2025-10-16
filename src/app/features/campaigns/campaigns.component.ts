@@ -15,6 +15,8 @@ import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { CampaignService, Campaign, CampaignCreate, CampaignUpdate } from '../../core/services/campaign.service';
@@ -41,7 +43,9 @@ import { PhoneService, PhoneNumber, ApiPhoneNumber } from '../../core/services/p
     MatSnackBarModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
-    MatRadioModule
+    MatRadioModule,
+    MatDatepickerModule,
+    MatNativeDateModule
   ],
   templateUrl: './campaigns.component.html',
   styleUrls: ['./campaigns.component.scss']
@@ -214,7 +218,6 @@ export class CampaignsComponent implements OnInit, OnDestroy {
    * Open campaign menu
    */
   openCampaignMenu(campaign: Campaign, event: Event): void {
-    event.stopPropagation();
     this.selectedCampaign = campaign;
     // Menu will be triggered by template
   }
@@ -274,6 +277,18 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.editingCampaign = campaign;
     this.isCreatingCampaign = true;
     
+    // Parse scheduled_at if it exists
+    let scheduleDate = null;
+    let scheduleTime = '';
+    let scheduleTimezone = 'Asia/Calcutta';
+    
+    if (campaign.scheduled_at) {
+      const scheduledDate = new Date(campaign.scheduled_at);
+      scheduleDate = scheduledDate;
+      scheduleTime = scheduledDate.toTimeString().slice(0, 5); // HH:MM format
+      // You might want to detect timezone from the date or use a default
+    }
+    
     // Populate form with campaign data
     this.campaignForm.patchValue({
       name: campaign.name,
@@ -281,6 +296,9 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       phone_number_id: campaign.phone_number_id,
       assistant_id: campaign.assistant_id,
       schedule_type: campaign.schedule_type,
+      schedule_date: scheduleDate,
+      schedule_time: scheduleTime,
+      schedule_timezone: scheduleTimezone,
       scheduled_at: campaign.scheduled_at
     });
   }
@@ -383,12 +401,64 @@ export class CampaignsComponent implements OnInit, OnDestroy {
       phone_number_id: ['', Validators.required],
       assistant_id: ['', Validators.required],
       schedule_type: ['NOW'],
+      schedule_date: [null],
+      schedule_time: [''],
+      schedule_timezone: ['Asia/Calcutta'],
       scheduled_at: [null],
       max_calls_per_hour: [50],
       retry_failed_calls: [true],
       max_retries: [3],
       retry_delay_minutes: [30]
     });
+
+    // Add conditional validation for scheduled fields
+    this.campaignForm.get('schedule_type')?.valueChanges.subscribe(value => {
+      const scheduleDateControl = this.campaignForm.get('schedule_date');
+      const scheduleTimeControl = this.campaignForm.get('schedule_time');
+      
+      if (value === 'SCHEDULED') {
+        scheduleDateControl?.setValidators([Validators.required]);
+        scheduleTimeControl?.setValidators([Validators.required]);
+      } else {
+        scheduleDateControl?.clearValidators();
+        scheduleTimeControl?.clearValidators();
+        scheduleDateControl?.setValue(null);
+        scheduleTimeControl?.setValue('');
+      }
+      scheduleDateControl?.updateValueAndValidity();
+      scheduleTimeControl?.updateValueAndValidity();
+    });
+
+    // Combine date and time when either changes
+    this.campaignForm.get('schedule_date')?.valueChanges.subscribe(() => {
+      this.updateScheduledAt();
+    });
+
+    this.campaignForm.get('schedule_time')?.valueChanges.subscribe(() => {
+      this.updateScheduledAt();
+    });
+
+    this.campaignForm.get('schedule_timezone')?.valueChanges.subscribe(() => {
+      this.updateScheduledAt();
+    });
+  }
+
+  /**
+   * Update scheduled_at field by combining date, time, and timezone
+   */
+  private updateScheduledAt(): void {
+    const date = this.campaignForm.get('schedule_date')?.value;
+    const time = this.campaignForm.get('schedule_time')?.value;
+    const timezone = this.campaignForm.get('schedule_timezone')?.value;
+
+    if (date && time && timezone) {
+      // Create a date string in the format expected by the backend
+      const dateTimeString = `${date.toISOString().split('T')[0]}T${time}`;
+      const scheduledAt = new Date(dateTimeString);
+      this.campaignForm.get('scheduled_at')?.setValue(scheduledAt);
+    } else {
+      this.campaignForm.get('scheduled_at')?.setValue(null);
+    }
   }
 
   /**
@@ -409,6 +479,7 @@ export class CampaignsComponent implements OnInit, OnDestroy {
     this.editingCampaign = null;
     this.csvData = [];
     this.isDragOver = false;
+    this.initializeForm(); // Reset form to default values
   }
 
   /**
@@ -496,6 +567,26 @@ export class CampaignsComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Download CSV template
+   */
+  downloadTemplate(): void {
+    const templateData = `phone_number,name,email
++919876543210,Rajesh Kumar,rajesh.kumar@email.com
++919876543211,Priya Sharma,priya.sharma@email.com
++919876543212,Amit Patel,amit.patel@email.com
++919876543213,Sunita Singh,sunita.singh@email.com
++919876543214,Vikram Gupta,vikram.gupta@email.com`;
+
+    const blob = new Blob([templateData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'campaign-template.csv';
+    link.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  /**
    * Submit campaign form
    */
   submitCampaign(): void {
@@ -529,14 +620,9 @@ export class CampaignsComponent implements OnInit, OnDestroy {
         const campaignData: CampaignCreate = {
           ...this.campaignForm.value,
           contacts: this.csvData.map(row => ({
-            phone_number: row.phone_number || row.phone || '',
+            phone_number: row.phone_number || '',
             name: row.name || '',
-            email: row.email || '',
-            custom_field_1: row.custom_field_1 || '',
-            custom_field_2: row.custom_field_2 || '',
-            custom_field_3: row.custom_field_3 || '',
-            custom_field_4: row.custom_field_4 || '',
-            custom_field_5: row.custom_field_5 || ''
+            email: row.email || ''
           }))
         };
 
