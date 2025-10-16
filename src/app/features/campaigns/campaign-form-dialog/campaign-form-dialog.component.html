@@ -131,19 +131,41 @@
             </div>
           </mat-radio-group>
 
-          <!-- Date and Time Picker for Scheduled Campaigns -->
-          <div class="schedule-datetime" *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Date</mat-label>
-              <input matInput [matDatepicker]="datePicker" formControlName="scheduled_date" placeholder="Choose date">
-              <mat-datepicker-toggle matSuffix [for]="datePicker"></mat-datepicker-toggle>
-              <mat-datepicker #datePicker></mat-datepicker>
-            </mat-form-field>
-            
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Select Time</mat-label>
-              <input matInput type="time" formControlName="scheduled_time" placeholder="Choose time">
-            </mat-form-field>
+          <!-- Start at Section for Scheduled Campaigns -->
+          <div class="start-at-section" *ngIf="campaignForm.get('schedule_type')?.value === 'SCHEDULED'">
+            <h4 class="section-title">Start at</h4>
+            <div class="datetime-fields">
+              <mat-form-field appearance="outline" class="date-field">
+                <mat-label>Date</mat-label>
+                <input matInput [matDatepicker]="datePicker" formControlName="scheduled_date" placeholder="Today">
+                <mat-datepicker-toggle matSuffix [for]="datePicker">
+                  <mat-icon matDatepickerToggleIcon>keyboard_arrow_up</mat-icon>
+                </mat-datepicker-toggle>
+                <mat-datepicker #datePicker></mat-datepicker>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="time-field">
+                <mat-label>Time</mat-label>
+                <input matInput type="time" formControlName="scheduled_time" placeholder="12:22 PM">
+                <mat-icon matSuffix>access_time</mat-icon>
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline" class="timezone-field">
+                <mat-label>Timezone</mat-label>
+                <mat-select formControlName="scheduled_timezone">
+                  <mat-option value="UTC">UTC (GMT+0:00)</mat-option>
+                  <mat-option value="America/New_York">America/New_York (GMT-5:00)</mat-option>
+                  <mat-option value="America/Los_Angeles">America/Los_Angeles (GMT-8:00)</mat-option>
+                  <mat-option value="Europe/London">Europe/London (GMT+0:00)</mat-option>
+                  <mat-option value="Europe/Paris">Europe/Paris (GMT+1:00)</mat-option>
+                  <mat-option value="Asia/Tokyo">Asia/Tokyo (GMT+9:00)</mat-option>
+                  <mat-option value="Asia/Shanghai">Asia/Shanghai (GMT+8:00)</mat-option>
+                  <mat-option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</mat-option>
+                  <mat-option value="Australia/Sydney">Australia/Sydney (GMT+10:00)</mat-option>
+                </mat-select>
+                <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
+              </mat-form-field>
+            </div>
           </div>
         </div>
       </div>

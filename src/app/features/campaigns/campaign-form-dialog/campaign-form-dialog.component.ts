@@ -71,7 +71,25 @@ export class CampaignFormDialogComponent implements OnInit {
   ngOnInit(): void {
     if (this.data.mode === 'edit' && this.data.campaign) {
       this.populateForm(this.data.campaign);
+    } else {
+      // Set default values for new campaigns
+      this.setDefaultScheduleValues();
     }
+  }
+
+  /**
+   * Set default values for scheduling
+   */
+  private setDefaultScheduleValues(): void {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    this.campaignForm.patchValue({
+      scheduled_date: tomorrow,
+      scheduled_time: '09:00',
+      scheduled_timezone: 'UTC'
+    });
   }
 
   /**
@@ -91,6 +109,7 @@ export class CampaignFormDialogComponent implements OnInit {
       schedule_type: ['NOW', Validators.required],
       scheduled_date: [null],
       scheduled_time: [null],
+      scheduled_timezone: ['UTC'],
       scheduled_at: [null],
       
       // CSV Upload
@@ -110,11 +129,14 @@ export class CampaignFormDialogComponent implements OnInit {
     // Parse scheduled_at if it exists
     let scheduled_date = null;
     let scheduled_time = null;
+    let scheduled_timezone = 'UTC';
     
     if (campaign.scheduled_at) {
       const date = new Date(campaign.scheduled_at);
       scheduled_date = date;
       scheduled_time = date.toTimeString().slice(0, 5); // HH:MM format
+      // For now, default to UTC - in a real app, you'd store timezone in the campaign
+      scheduled_timezone = 'UTC';
     }
     
     this.campaignForm.patchValue({
@@ -124,7 +146,8 @@ export class CampaignFormDialogComponent implements OnInit {
       phone_number_id: campaign.phone_number_id,
       schedule_type: campaign.schedule_type || 'NOW',
       scheduled_date: scheduled_date,
-      scheduled_time: scheduled_time
+      scheduled_time: scheduled_time,
+      scheduled_timezone: scheduled_timezone
     });
   }
 
@@ -152,10 +175,14 @@ export class CampaignFormDialogComponent implements OnInit {
     // Handle scheduling logic
     let scheduled_at = null;
     if (formValue.schedule_type === 'SCHEDULED' && formValue.scheduled_date && formValue.scheduled_time) {
-      // Combine date and time into a proper datetime
+      // Combine date and time into a proper datetime with timezone
       const date = new Date(formValue.scheduled_date);
       const [hours, minutes] = formValue.scheduled_time.split(':');
+      
+      // Set the time in the local timezone first
       date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      
+      // Convert to UTC for storage (the backend will handle timezone conversion)
       scheduled_at = date.toISOString();
     }
     
