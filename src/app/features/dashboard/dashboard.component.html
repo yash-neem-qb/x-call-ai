@@ -7,16 +7,6 @@
         <span class="user-welcome">Welcome {{ currentUser?.email || 'Unknown User' }}</span>
       </div>
     </div>
-    <div class="header-right">
-      <button mat-button class="header-button">
-        <mat-icon>description</mat-icon>
-        <span>Docs</span>
-      </button>
-      <button mat-button class="header-button">
-        <mat-icon>chat</mat-icon>
-        <span>Discord</span>
-      </button>
-    </div>
   </header>
 
   <!-- Metrics Section -->
@@ -51,25 +41,25 @@
         <div class="metric-value">{{ formatDuration(dashboardData.duration_metrics?.average_duration_seconds || 0) }}</div>
         <div class="metric-trend" [class.neutral]="true">
           <mat-icon>remove</mat-icon>
-          <span>0.0%</span>
+          <span>0.00%</span>
         </div>
       </div>
       
       <div class="metric-card">
         <div class="metric-title">Total Cost</div>
-        <div class="metric-value">{{ (dashboardData.cost_metrics?.total_cost_usd || 0).toFixed(2) }} credits</div>
+        <div class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.total_cost_usd || 0) }} credits</div>
         <div class="metric-trend" [class.positive]="costTrend >= 0" [class.negative]="costTrend < 0">
           <mat-icon>{{ costTrend >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-          <span>{{ Math.abs(costTrend) }}%</span>
+          <span>{{ formatNumber(Math.abs(costTrend)) }}%</span>
         </div>
       </div>
       
       <div class="metric-card">
         <div class="metric-title">Avg Cost</div>
-        <div class="metric-value">{{ (dashboardData.cost_metrics?.average_cost_usd || 0).toFixed(2) }} cr/call</div>
+        <div class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.average_cost_usd || 0) }} cr/call</div>
         <div class="metric-trend" [class.neutral]="true">
           <mat-icon>remove</mat-icon>
-          <span>0.0%</span>
+          <span>0.00%</span>
         </div>
       </div>
     </div>
@@ -80,9 +70,9 @@
     <h2 class="section-title">Call Success</h2>
     <div class="success-metrics">
       <div class="success-rate">
-        <span class="success-percentage">{{ (dashboardData?.overview?.success_rate || 0).toFixed(0) }}%</span>
+        <span class="success-percentage">{{ formatPercentage(dashboardData?.overview?.success_rate || 0) }}</span>
         <div class="success-trend" [class.positive]="successTrend >= 0" [class.negative]="successTrend < 0">
-          <span>{{ successTrend >= 0 ? '+' : '' }}{{ successTrend.toFixed(1) }}% Compared to previous period</span>
+          <span>{{ successTrend >= 0 ? '+' : '' }}{{ formatNumber(successTrend) }}% Compared to previous period</span>
         </div>
       </div>
     </div>
@@ -126,45 +116,155 @@
     </div>
   </div>
 
-  <!-- Recent Activity Section -->
-  <div class="section">
-    <div class="section-header">
-      <h2 class="section-title">Recent Activity</h2>
-      <button mat-stroked-button class="view-all-button" (click)="viewCalls()">
-        <span>View All</span>
-        <mat-icon>chevron_right</mat-icon>
-      </button>
-    </div>
+  <!-- Enhanced Analytics Section -->
+  <div class="analytics-section" *ngIf="dashboardData">
+    <h2 class="section-title">Detailed Analytics</h2>
     
-    <div class="activity-empty" *ngIf="!recentCalls || recentCalls.length === 0">
-      <mat-icon>history</mat-icon>
-      <p>No recent activity</p>
-      <span>Your recent calls and interactions will appear here</span>
-    </div>
-    
-    <div class="activity-list" *ngIf="recentCalls && recentCalls.length > 0">
-      <div class="activity-item" *ngFor="let call of recentCalls">
-        <div class="activity-icon" [class.success]="call.success" [class.failed]="!call.success">
-          <mat-icon>{{ call.success ? 'call' : 'call_end' }}</mat-icon>
-        </div>
-        <div class="activity-details">
-          <div class="activity-title">
-            <span class="activity-name">{{ call.assistant_name }}</span>
-            <span class="activity-time">{{ formatTime(call.start_time) }}</span>
+    <div class="analytics-grid">
+      <!-- Call Breakdown -->
+      <div class="analytics-card">
+        <h3 class="analytics-title">Call Breakdown</h3>
+        <div class="analytics-metrics">
+          <div class="analytics-metric">
+            <span class="metric-label">Inbound Calls:</span>
+            <span class="metric-value">{{ dashboardData.overview?.inbound_calls || 0 }}</span>
           </div>
-          <div class="activity-meta">
-            <span class="activity-duration">{{ formatDuration(call.duration) }}</span>
-            <span class="activity-status" [class.success]="call.success" [class.failed]="!call.success">
-              {{ call.success ? 'Successful' : 'Failed' }}
-            </span>
-            </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Outbound Calls:</span>
+            <span class="metric-value">{{ dashboardData.overview?.outbound_calls || 0 }}</span>
           </div>
-        <button mat-icon-button class="activity-action">
-          <mat-icon>more_vert</mat-icon>
-        </button>
+          <div class="analytics-metric">
+            <span class="metric-label">Completed:</span>
+            <span class="metric-value success">{{ dashboardData.overview?.completed_calls || 0 }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Failed:</span>
+            <span class="metric-value error">{{ dashboardData.overview?.failed_calls || 0 }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Busy:</span>
+            <span class="metric-value warning">{{ dashboardData.overview?.busy_calls || 0 }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">No Answer:</span>
+            <span class="metric-value warning">{{ dashboardData.overview?.no_answer_calls || 0 }}</span>
+          </div>
         </div>
       </div>
+
+      <!-- Duration Analytics -->
+      <div class="analytics-card">
+        <h3 class="analytics-title">Duration Analytics</h3>
+        <div class="analytics-metrics">
+          <div class="analytics-metric">
+            <span class="metric-label">Total Minutes:</span>
+            <span class="metric-value">{{ formatNumber(dashboardData.duration_metrics?.total_minutes || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Avg Duration:</span>
+            <span class="metric-value">{{ formatDuration(dashboardData.duration_metrics?.average_duration_seconds || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Min Duration:</span>
+            <span class="metric-value">{{ formatDuration(dashboardData.duration_metrics?.min_duration_seconds || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Max Duration:</span>
+            <span class="metric-value">{{ formatDuration(dashboardData.duration_metrics?.max_duration_seconds || 0) }}</span>
+          </div>
+        </div>
       </div>
+
+      <!-- Cost Analytics -->
+      <div class="analytics-card">
+        <h3 class="analytics-title">Cost Analytics</h3>
+        <div class="analytics-metrics">
+          <div class="analytics-metric">
+            <span class="metric-label">Total Cost:</span>
+            <span class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.total_cost_usd || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Avg Cost:</span>
+            <span class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.average_cost_usd || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Min Cost:</span>
+            <span class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.min_cost_usd || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Max Cost:</span>
+            <span class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.max_cost_usd || 0) }}</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Cost per Minute:</span>
+            <span class="metric-value">{{ formatCurrency(dashboardData.cost_metrics?.cost_per_minute || 0) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quality Metrics -->
+      <div class="analytics-card">
+        <h3 class="analytics-title">Quality Metrics</h3>
+        <div class="analytics-metrics">
+          <div class="analytics-metric">
+            <span class="metric-label">Avg Quality Score:</span>
+            <span class="metric-value">{{ formatNumber((dashboardData.quality_metrics?.average_quality_score || 0) * 100) }}%</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Avg Sentiment Score:</span>
+            <span class="metric-value">{{ formatNumber((dashboardData.quality_metrics?.average_sentiment_score || 0) * 100) }}%</span>
+          </div>
+          <div class="analytics-metric">
+            <span class="metric-label">Avg Satisfaction:</span>
+            <span class="metric-value">{{ formatNumber(dashboardData.quality_metrics?.average_satisfaction_rating || 0) }}/5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phone Number Usage Section -->
+  <div class="phone-usage-section" *ngIf="dashboardData?.phone_number_usage && dashboardData.phone_number_usage.length > 0">
+    <h2 class="section-title">Phone Number Usage</h2>
+    <div class="usage-table">
+      <div class="usage-header">
+        <span>Phone Number</span>
+        <span>Friendly Name</span>
+        <span>Assistant</span>
+        <span>Call Count</span>
+        <span>Total Duration</span>
+        <span>Total Cost</span>
+      </div>
+      <div class="usage-row" *ngFor="let phone of dashboardData.phone_number_usage">
+        <span class="phone-number">{{ phone.phone_number }}</span>
+        <span class="friendly-name">{{ phone.friendly_name }}</span>
+        <span class="assistant-name">{{ getAssistantName(phone.assistant_id) || 'Unassigned' }}</span>
+        <span class="call-count">{{ phone.call_count }}</span>
+        <span class="duration">{{ formatNumber(phone.total_duration_minutes) }}m</span>
+        <span class="cost">{{ formatCurrency(phone.total_cost_usd) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assistant Usage Section -->
+  <div class="assistant-usage-section" *ngIf="dashboardData?.assistant_usage && dashboardData.assistant_usage.length > 0">
+    <h2 class="section-title">Assistant Usage</h2>
+    <div class="usage-table">
+      <div class="usage-header">
+        <span>Assistant Name</span>
+        <span>Call Count</span>
+        <span>Total Duration</span>
+        <span>Avg Quality Score</span>
+      </div>
+      <div class="usage-row" *ngFor="let assistant of dashboardData.assistant_usage">
+        <span class="assistant-name">{{ assistant.assistant_name }}</span>
+        <span class="call-count">{{ assistant.call_count }}</span>
+        <span class="duration">{{ formatNumber(assistant.total_duration_minutes) }}m</span>
+        <span class="quality-score">{{ getQualityScoreDisplay(assistant.average_quality_score) }}</span>
+      </div>
+    </div>
+  </div>
+
 
       <!-- Loading State -->
       <div class="loading-state" *ngIf="isLoading">

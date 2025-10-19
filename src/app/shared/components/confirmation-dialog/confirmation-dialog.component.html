@@ -1,0 +1,49 @@
+<div class="confirmation-dialog">
+  <h2 mat-dialog-title class="dialog-title">
+    <mat-icon *ngIf="data.isDestructive" class="warning-icon">warning</mat-icon>
+    {{ data.title }}
+  </h2>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="message">{{ data.message }}</div>
+    
+    <div *ngIf="data.showDataSummary && data.dataSummary" class="data-summary">
+      <h4>This will permanently delete:</h4>
+      <ul class="deletion-list">
+        <li>Your account and all personal data</li>
+        <li *ngIf="data.dataSummary.created_organizations > 0">
+          {{ data.dataSummary.created_organizations }} organization(s) you created
+        </li>
+        <li *ngIf="data.dataSummary.created_calls > 0">
+          {{ data.dataSummary.created_calls }} call(s) you made
+        </li>
+        <li *ngIf="data.dataSummary.assistants_in_orgs > 0">
+          {{ data.dataSummary.assistants_in_orgs }} assistant(s) in your organizations
+        </li>
+        <li *ngIf="data.dataSummary.phone_numbers_in_orgs > 0">
+          {{ data.dataSummary.phone_numbers_in_orgs }} phone number(s) in your organizations
+        </li>
+        <li *ngIf="data.dataSummary.knowledge_bases_in_orgs > 0">
+          {{ data.dataSummary.knowledge_bases_in_orgs }} knowledge base(s) in your organizations
+        </li>
+        <li>All data in organizations you created</li>
+      </ul>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button 
+      mat-button 
+      (click)="onCancel()" 
+      class="cancel-button">
+      {{ data.cancelText || 'Cancel' }}
+    </button>
+    <button 
+      mat-raised-button 
+      [color]="data.isDestructive ? 'warn' : 'primary'"
+      (click)="onConfirm()" 
+      class="confirm-button">
+      {{ data.confirmText || 'Confirm' }}
+    </button>
+  </mat-dialog-actions>
+</div>

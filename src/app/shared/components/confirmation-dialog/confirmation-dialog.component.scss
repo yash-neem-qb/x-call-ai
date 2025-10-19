@@ -1,0 +1,106 @@
+.confirmation-dialog {
+  min-width: 400px;
+  max-width: 500px;
+  
+  .dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    
+    .warning-icon {
+      color: #f44336;
+    }
+  }
+  
+  .dialog-content {
+    margin-bottom: 24px;
+    
+    .message {
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    
+    .data-summary {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 16px;
+      
+      h4 {
+        margin: 0 0 12px 0;
+        color: #f44336;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+      
+      .deletion-list {
+        margin: 0;
+        padding-left: 20px;
+        
+        li {
+          margin-bottom: 4px;
+          line-height: 1.4;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+  
+  .dialog-actions {
+    margin: 0;
+    padding: 0;
+    gap: 8px;
+    
+    .cancel-button {
+      color: #666;
+    }
+    
+    .confirm-button {
+      min-width: 100px;
+    }
+  }
+}
+
+// Dark theme adjustments
+:host-context(.dark-theme) {
+  .confirmation-dialog {
+    .data-summary {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    
+    .dialog-actions {
+      .cancel-button {
+        color: #999;
+      }
+    }
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 600px) {
+  .confirmation-dialog {
+    min-width: 300px;
+    max-width: 90vw;
+    
+    .dialog-title {
+      font-size: 1.1rem;
+    }
+    
+    .dialog-content {
+      .data-summary {
+        padding: 12px;
+        
+        .deletion-list {
+          padding-left: 16px;
+          
+          li {
+            font-size: 0.85rem;
+          }
+        }
+      }
+    }
+  }
+}

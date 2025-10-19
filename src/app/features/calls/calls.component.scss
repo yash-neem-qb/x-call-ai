@@ -48,6 +48,10 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
+    
+    .button-spinner {
+      margin-right: 4px;
+    }
     transition: all 0.2s ease;
     
     &:hover {

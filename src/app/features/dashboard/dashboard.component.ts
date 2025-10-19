@@ -47,7 +47,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoading = true;
   isLoadingOrgs = true;
   error: string | null = null;
-  recentCalls: Call[] = [];
   
   // New properties for the updated dashboard
   selectedAssistant: string = 'all';
@@ -186,18 +185,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         }
       });
       
-    // Load recent calls
-    this.callService.getCalls(1, 5)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.recentCalls = response.items;
-        },
-        error: (err) => {
-          console.error('Error loading recent calls:', err);
-          this.recentCalls = [];
-        }
-      });
   }
 
   /**
@@ -262,10 +249,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
   
   /**
-   * Format duration in seconds to human-readable format
+   * Format duration in seconds to human-readable format with 2 decimal places
    */
   formatDuration(seconds: number): string {
-    if (seconds === 0) return '0s';
+    if (seconds === 0) return '0.00s';
+    
+    // For durations less than 60 seconds, show with 2 decimal places
+    if (seconds < 60) {
+      return `${seconds.toFixed(2)}s`;
+    }
     
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -274,9 +266,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
     let result = '';
     if (hours > 0) result += `${hours}h `;
     if (minutes > 0) result += `${minutes}m `;
-    if (remainingSeconds > 0) result += `${remainingSeconds}s`;
+    if (remainingSeconds > 0) result += `${remainingSeconds.toFixed(2)}s`;
     
     return result.trim();
+  }
+
+  /**
+   * Format percentage with 2 decimal places
+   */
+  formatPercentage(value: number): string {
+    return `${value.toFixed(2)}%`;
+  }
+
+  /**
+   * Format currency with 2 decimal places
+   */
+  formatCurrency(value: number): string {
+    return `$${value.toFixed(2)}`;
+  }
+
+  /**
+   * Format number with 2 decimal places
+   */
+  formatNumber(value: number): string {
+    return value.toFixed(2);
+  }
+
+  /**
+   * Get assistant name by ID
+   */
+  getAssistantName(assistantId: string | null): string | null {
+    if (!assistantId) return null;
+    const assistant = this.assistants.find(a => a.id === assistantId);
+    return assistant ? assistant.name : null;
   }
   
   /**
@@ -311,11 +333,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadDashboard();
   }
 
+
   /**
-   * View calls
+   * Get quality score display text
    */
-  viewCalls(): void {
-    this.router.navigate(['/calls']);
+  getQualityScoreDisplay(qualityScore: number | null | undefined): string {
+    if (qualityScore === null || qualityScore === undefined || qualityScore === 0) {
+      return 'N/A';
+    }
+    return `${this.formatNumber(qualityScore * 100)}%`;
   }
 
   /**

@@ -18,6 +18,27 @@ export interface OrganizationsResponse {
   total_count: number;
 }
 
+export interface CreateOrganizationRequest {
+  name: string;
+  description?: string;
+  slug?: string;
+}
+
+export interface CreateOrganizationResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  plan: string;
+  max_users: number;
+  max_phone_numbers: number;
+  max_assistants: number;
+  is_active: boolean;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -150,5 +171,33 @@ export class OrganizationService {
    */
   removeMember(organizationId: string, memberId: string): Observable<any> {
     return this.http.delete<any>(`${this.API_URL}/organizations/${organizationId}/members/${memberId}`);
+  }
+
+  /**
+   * Create a new organization
+   */
+  createOrganization(data: CreateOrganizationRequest): Observable<CreateOrganizationResponse> {
+    return this.http.post<CreateOrganizationResponse>(`${this.API_URL}/organizations/`, data);
+  }
+
+  /**
+   * Get all organizations that the user is a member of
+   */
+  getUserOrganizations(): Observable<CreateOrganizationResponse[]> {
+    return this.http.get<CreateOrganizationResponse[]>(`${this.API_URL}/organizations/`);
+  }
+
+  /**
+   * Get organizations created by the current user
+   */
+  getCreatedOrganizations(): Observable<CreateOrganizationResponse[]> {
+    return this.http.get<CreateOrganizationResponse[]>(`${this.API_URL}/organizations/created`);
+  }
+
+  /**
+   * Delete an organization
+   */
+  deleteOrganization(organizationId: string): Observable<any> {
+    return this.http.delete<any>(`${this.API_URL}/organizations/${organizationId}`);
   }
 }

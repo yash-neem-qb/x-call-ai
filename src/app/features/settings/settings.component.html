@@ -46,11 +46,28 @@
           
           <div class="form-group">
             <label class="form-label">Organization Name</label>
-            <input 
-              type="text" 
-              class="form-input readonly"
-              [value]="organizationSettings.organizationName"
-              readonly>
+            <div class="input-with-edit">
+              <input 
+                type="text" 
+                class="form-input"
+                [(ngModel)]="organizationSettings.organizationName"
+                [readonly]="!isEditingOrgName"
+                [class.readonly]="!isEditingOrgName">
+              <button 
+                class="edit-button" 
+                (click)="toggleOrgNameEdit()"
+                *ngIf="!isEditingOrgName">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <div class="edit-actions" *ngIf="isEditingOrgName">
+                <button class="save-button" (click)="saveOrgName()" [disabled]="isSavingOrgName">
+                  <mat-icon>check</mat-icon>
+                </button>
+                <button class="cancel-button" (click)="cancelOrgNameEdit()">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -91,11 +108,18 @@
             <input 
               type="text" 
               class="form-input"
-              placeholder="Enter organization name">
+              [(ngModel)]="deleteConfirmationName"
+              placeholder="Enter organization name"
+              [disabled]="isDeletingOrganization">
           </div>
 
-          <button class="delete-button" (click)="deleteOrganization()">
-            Delete Organization
+          <button 
+            class="delete-button" 
+            (click)="deleteOrganization()"
+            [disabled]="!canDeleteOrganization() || isDeletingOrganization">
+            <mat-spinner *ngIf="isDeletingOrganization" diameter="16" class="button-spinner"></mat-spinner>
+            <mat-icon *ngIf="!isDeletingOrganization">delete</mat-icon>
+            <span>{{ isDeletingOrganization ? 'Deleting...' : 'Delete Organization' }}</span>
           </button>
         </div>
       </div>
@@ -237,8 +261,13 @@
           </div>
 
           <div class="form-actions">
-            <button class="delete-account-button" (click)="deleteAccount()">
-              Delete Account
+            <button 
+              class="delete-account-button" 
+              (click)="deleteAccount()"
+              [disabled]="isDeletingAccount">
+              <mat-spinner *ngIf="isDeletingAccount" diameter="16" class="button-spinner"></mat-spinner>
+              <mat-icon *ngIf="!isDeletingAccount">delete</mat-icon>
+              <span>{{ isDeletingAccount ? 'Deleting...' : 'Delete Account' }}</span>
             </button>
           </div>
         </div>

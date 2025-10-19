@@ -115,6 +115,8 @@ export class CallsComponent implements OnInit, OnDestroy {
   
   // Loading state
   isLoading = false;
+  isRefreshing = false;
+  isExporting = false;
   
   // Pagination
   currentPage = 1;
@@ -172,7 +174,7 @@ export class CallsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
   
-  loadCallLogs(): void {
+  loadCallLogs(): Promise<void> {
     console.log('loadCallLogs() called - current page:', this.currentPage, 'search term:', this.searchTerm);
     this.isLoading = true;
     
@@ -184,7 +186,7 @@ export class CallsComponent implements OnInit, OnDestroy {
       this.callLogs = [];
       this.calculateStatistics();
       this.isLoading = false;
-      return;
+      return Promise.resolve();
     }
     
     const organizationId = currentUser.organization_id;
@@ -197,7 +199,7 @@ export class CallsComponent implements OnInit, OnDestroy {
       this.applyFilters();
       this.calculateStatistics();
       this.isLoading = false;
-      return;
+      return Promise.resolve();
     }
 
     // Build query parameters for filters
@@ -274,60 +276,64 @@ export class CallsComponent implements OnInit, OnDestroy {
     // Call real API using the new organization-based endpoint with filters
     const url = `${environment.apiUrl}/organizations/${organizationId}/calls?${queryParams.toString()}`;
     
-    this.http.get<any>(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          this.callLogs = response.calls.map(call => ({
-            id: call.id,
-            organizationId: call.organization_id,
-            phoneNumberId: call.phone_number_id,
-            assistantId: call.assistant_id,
-            fromNumber: call.from_number,
-            toNumber: call.to_number,
-            direction: call.direction,
-            status: call.status,
-            sessionId: call.twilio_call_sid,
-            startedAt: call.started_at,
-            endedAt: call.ended_at,
-            durationSeconds: call.duration_seconds,
-            costUsd: call.cost_usd,
-            createdAt: call.created_at,
-            updatedAt: call.updated_at,
-            endReason: call.end_reason,
-            transcriptData: call.transcript_data,
-            // AI Analysis fields
-            call_success: call.call_success,
-            call_summary: call.call_summary,
-            sentiment_score: call.sentiment_score,
-            analysis_completed: call.analysis_completed,
-            detailed_analysis: call.detailed_analysis
-          }));
-          
-          // Update pagination info
-          this.totalCalls = response.total || 0;
-          this.totalPages = response.total_pages || 1;
-          
-          this.calculateStatistics();
-          this.isLoading = false;
-        },
-        error: (err) => {
-          console.error('Error loading call logs:', err);
-          this.snackBar.open('Error loading call logs. Please try again.', 'Close', { duration: 5000 });
-          this.callLogs = [];
-          this.calculateStatistics();
-          this.isLoading = false;
+    return new Promise<void>((resolve, reject) => {
+      this.http.get<any>(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      });
+      })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            this.callLogs = response.calls.map(call => ({
+              id: call.id,
+              organizationId: call.organization_id,
+              phoneNumberId: call.phone_number_id,
+              assistantId: call.assistant_id,
+              fromNumber: call.from_number,
+              toNumber: call.to_number,
+              direction: call.direction,
+              status: call.status,
+              sessionId: call.twilio_call_sid,
+              startedAt: call.started_at,
+              endedAt: call.ended_at,
+              durationSeconds: call.duration_seconds,
+              costUsd: call.cost_usd,
+              createdAt: call.created_at,
+              updatedAt: call.updated_at,
+              endReason: call.end_reason,
+              transcriptData: call.transcript_data,
+              // AI Analysis fields
+              call_success: call.call_success,
+              call_summary: call.call_summary,
+              sentiment_score: call.sentiment_score,
+              analysis_completed: call.analysis_completed,
+              detailed_analysis: call.detailed_analysis
+            }));
+            
+            // Update pagination info
+            this.totalCalls = response.total || 0;
+            this.totalPages = response.total_pages || 1;
+            
+            this.calculateStatistics();
+            this.isLoading = false;
+            resolve();
+          },
+          error: (err) => {
+            console.error('Error loading call logs:', err);
+            this.snackBar.open('Error loading call logs. Please try again.', 'Close', { duration: 5000 });
+            this.callLogs = [];
+            this.calculateStatistics();
+            this.isLoading = false;
+            reject(err);
+          }
+        });
+    });
   }
   
   loadAssistants(): void {
-    this.assistantService.getAssistants(1, 100)
+    this.assistantService.getAssistants()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -394,7 +400,7 @@ export class CallsComponent implements OnInit, OnDestroy {
   getAssistantName(assistantId?: string): string {
     if (!assistantId) return '-';
     const assistant = this.assistants.find(a => a.id === assistantId);
-    return assistant ? assistant.name : 'Unknown Assistant';
+    return assistant ? assistant.name : '-';
   }
   
   getEndedReason(call: CallLog): string {
@@ -515,12 +521,150 @@ export class CallsComponent implements OnInit, OnDestroy {
   }
   
   refreshCallLogs(): void {
-    this.loadCallLogs();
+    this.isRefreshing = true;
+    this.loadCallLogs().finally(() => {
+      this.isRefreshing = false;
+    });
   }
   
   exportCallLogs(): void {
-    // Implement CSV export
-    console.log('Exporting call logs to CSV...');
+    if (this.callLogs.length === 0) {
+      this.snackBar.open('No call logs to export', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    this.isExporting = true;
+
+    try {
+      // Prepare CSV data
+      const csvData = this.prepareCSVData();
+      
+      // Create and download CSV file
+      this.downloadCSV(csvData, 'call-logs.csv');
+      
+      this.snackBar.open(`Exported ${this.callLogs.length} call logs to CSV`, 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      this.snackBar.open('Failed to export CSV. Please try again.', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+    } finally {
+      this.isExporting = false;
+    }
+  }
+
+  private prepareCSVData(): string {
+    // CSV headers
+    const headers = [
+      'Call ID',
+      'Assistant',
+      'Assistant Phone Number',
+      'Customer Phone Number',
+      'Type',
+      'Ended Reason',
+      'Success Evaluation',
+      'Start Time',
+      'Duration (seconds)',
+      'Cost (USD)',
+      'Status',
+      'Created At'
+    ];
+
+    // Convert call logs to CSV rows
+    const rows = this.callLogs.map(call => [
+      call.id,
+      this.getAssistantName(call.assistantId),
+      call.toNumber || '-',
+      call.fromNumber || '-',
+      this.getCallType(call.direction),
+      this.getEndedReason(call),
+      this.getSuccessEvaluation(call),
+      this.formatStartTime(call.startedAt),
+      call.durationSeconds || 0,
+      call.costUsd || 0,
+      call.status,
+      this.formatDateTime(call.createdAt)
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(field => this.escapeCSVField(field)).join(','))
+      .join('\n');
+
+    return csvContent;
+  }
+
+  private escapeCSVField(field: any): string {
+    if (field === null || field === undefined) {
+      return '';
+    }
+    
+    const stringField = String(field);
+    
+    // If field contains comma, newline, or quote, wrap in quotes and escape quotes
+    if (stringField.includes(',') || stringField.includes('\n') || stringField.includes('"')) {
+      return `"${stringField.replace(/"/g, '""')}"`;
+    }
+    
+    return stringField;
+  }
+
+  private downloadCSV(csvContent: string, filename: string): void {
+    // Create blob with CSV content
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    // Create download link
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    URL.revokeObjectURL(url);
+  }
+
+
+  private getCallType(direction: string): string {
+    switch (direction) {
+      case 'inbound': return 'Inbound';
+      case 'outbound': return 'Outbound';
+      case 'web': return 'Web';
+      default: return direction;
+    }
+  }
+
+  private getSuccessEvaluation(call: CallLog): string {
+    if (!call.analysis_completed) return 'Analyzing...';
+    if (call.call_success === true) return 'Pass';
+    if (call.call_success === false) return 'Fail';
+    return '-';
+  }
+
+  private formatDateTime(dateString?: string): string {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString();
+    } catch {
+      return dateString;
+    }
   }
   
   previousPage(): void {

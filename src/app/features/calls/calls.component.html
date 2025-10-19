@@ -7,13 +7,15 @@
     </div>
     
     <div class="header-actions">
-      <button class="refresh-btn" (click)="refreshCallLogs()">
-        <mat-icon>refresh</mat-icon>
-        Refresh
+      <button class="refresh-btn" (click)="refreshCallLogs()" [disabled]="isRefreshing">
+        <mat-spinner *ngIf="isRefreshing" diameter="16" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!isRefreshing">refresh</mat-icon>
+        <span>{{ isRefreshing ? 'Refreshing...' : 'Refresh' }}</span>
       </button>
-      <button class="export-btn" (click)="exportCallLogs()">
-        <mat-icon>download</mat-icon>
-        Export CSV
+      <button class="export-btn" (click)="exportCallLogs()" [disabled]="isExporting">
+        <mat-spinner *ngIf="isExporting" diameter="16" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!isExporting">download</mat-icon>
+        <span>{{ isExporting ? 'Exporting...' : 'Export CSV' }}</span>
       </button>
     </div>
   </div>

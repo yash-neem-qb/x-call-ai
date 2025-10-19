@@ -119,12 +119,12 @@ export class PhoneService {
   }
 
   /**
-   * Get list of phone numbers
+   * Get list of phone numbers (all phone numbers, no pagination)
    */
-  getPhoneNumbers(page: number = 1, pageSize: number = 10): Observable<ApiPhoneNumber[]> {
+  getPhoneNumbers(): Observable<ApiPhoneNumber[]> {
     const organizationId = this.getOrganizationId();
     return this.http.get<ApiPhoneNumber[]>(
-      `${this.API_URL}/organizations/${organizationId}/phone-numbers?page=${page}&page_size=${pageSize}`
+      `${this.API_URL}/organizations/${organizationId}/phone-numbers`
     );
   }
 

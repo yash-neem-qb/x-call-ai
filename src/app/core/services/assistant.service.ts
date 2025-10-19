@@ -140,16 +140,14 @@ export class AssistantService {
   }
 
   /**
-   * Get list of assistants
+   * Get list of assistants (all assistants, no pagination)
    * Based on curl example:
-   * curl -X GET "https://<host>/api/v1/organizations/<ORG_ID>/assistants?skip=0&limit=25"
+   * curl -X GET "https://<host>/api/v1/organizations/<ORG_ID>/assistants"
    */
-  getAssistants(page: number = 1, limit: number = 10): Observable<AssistantList> {
+  getAssistants(): Observable<AssistantList> {
     const organizationId = this.getOrganizationId();
-    // According to curl example, the parameters are skip and limit
-    const skip = (page - 1) * limit;
     return this.http.get<AssistantList>(
-      `${this.API_URL}/organizations/${organizationId}/assistants?skip=${skip}&limit=${limit}`
+      `${this.API_URL}/organizations/${organizationId}/assistants`
     );
   }
 

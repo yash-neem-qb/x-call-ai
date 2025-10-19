@@ -146,6 +146,20 @@ export class AuthService {
   }
 
   /**
+   * Get account data summary for deletion confirmation
+   */
+  getAccountDataSummary(): Observable<any> {
+    return this.http.get<any>(`${this.API_URL}/auth/account/data-summary`);
+  }
+
+  /**
+   * Delete user account and all associated data
+   */
+  deleteAccount(): Observable<any> {
+    return this.http.delete<any>(`${this.API_URL}/auth/account`);
+  }
+
+  /**
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {

@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 
 import { OrganizationService, Organization } from '../../../core/services/organization.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CreateOrganizationDialogComponent } from '../create-organization-dialog/create-organization-dialog.component';
 
 @Component({
   selector: 'app-organization-switcher',
@@ -32,7 +33,8 @@ export class OrganizationSwitcherComponent implements OnInit, OnDestroy {
   constructor(
     private dialogRef: MatDialogRef<OrganizationSwitcherComponent>,
     private organizationService: OrganizationService,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -49,6 +51,32 @@ export class OrganizationSwitcherComponent implements OnInit, OnDestroy {
    */
   loadOrganizations(): void {
     this.isLoading = true;
+    this.organizationService.getUserOrganizations().subscribe({
+      next: (organizations) => {
+        // Convert the API response to our Organization interface
+        this.organizations = organizations.map(org => ({
+          organization_id: org.id,
+          organization_name: org.name,
+          role: 'owner', // Default role, could be enhanced based on membership data
+          is_active: org.is_active,
+          joined_at: org.created_at
+        }));
+        this.filteredOrganizations = [...this.organizations];
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading organizations:', error);
+        this.isLoading = false;
+        // Fallback to the old method if the new one fails
+        this.loadOrganizationsFallback();
+      }
+    });
+  }
+
+  /**
+   * Fallback method to load organizations using the old API
+   */
+  private loadOrganizationsFallback(): void {
     this.organizationService.getOrganizations().subscribe({
       next: (response) => {
         this.organizations = this.organizationService.extractOrganizations(response);
@@ -56,7 +84,7 @@ export class OrganizationSwitcherComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       },
       error: (error) => {
-        console.error('Error loading organizations:', error);
+        console.error('Error loading organizations (fallback):', error);
         this.isLoading = false;
       }
     });
@@ -131,8 +159,26 @@ export class OrganizationSwitcherComponent implements OnInit, OnDestroy {
    * Create new organization
    */
   createNewOrganization(): void {
-    // TODO: Implement create new organization functionality
-    console.log('Create new organization');
+    const dialogRef = this.dialog.open(CreateOrganizationDialogComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      disableClose: false,
+      autoFocus: true,
+      panelClass: 'create-org-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.success) {
+        // Organization was created successfully
+        console.log('Organization created:', result.organization);
+        
+        // Reload organizations list to include the new one
+        this.loadOrganizations();
+        
+        // Optionally switch to the new organization
+        // this.switchToOrganization(result.organization);
+      }
+    });
   }
 
   /**

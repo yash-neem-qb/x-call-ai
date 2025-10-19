@@ -1,0 +1,77 @@
+<!-- Create Organization Dialog -->
+<div class="create-org-dialog">
+  <!-- Header -->
+  <div class="dialog-header">
+    <h2 class="dialog-title">
+      <mat-icon>business</mat-icon>
+      Create New Organization
+    </h2>
+    <button class="close-button" (click)="onCancel()" [disabled]="isLoading">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Form -->
+  <form [formGroup]="createForm" (ngSubmit)="onSubmit()" class="create-form">
+    <div class="form-content">
+      
+      <!-- Organization Name -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Organization Name</mat-label>
+        <input 
+          matInput 
+          formControlName="name" 
+          placeholder="Enter organization name"
+          [disabled]="isLoading"
+          autocomplete="organization">
+        <mat-icon matSuffix>business</mat-icon>
+        <mat-error *ngIf="hasFieldError('name')">
+          {{ getFieldError('name') }}
+        </mat-error>
+      </mat-form-field>
+
+      <!-- Description -->
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Description (Optional)</mat-label>
+        <textarea 
+          matInput 
+          formControlName="description" 
+          placeholder="Brief description of your organization"
+          [disabled]="isLoading"
+          rows="3"
+          maxlength="500">
+        </textarea>
+        <mat-icon matSuffix>description</mat-icon>
+        <mat-hint align="end">{{ createForm.get('description')?.value?.length || 0 }}/500</mat-hint>
+        <mat-error *ngIf="hasFieldError('description')">
+          {{ getFieldError('description') }}
+        </mat-error>
+      </mat-form-field>
+
+
+    </div>
+
+    <!-- Actions -->
+    <div class="dialog-actions">
+      <button 
+        type="button" 
+        mat-button 
+        (click)="onCancel()" 
+        [disabled]="isLoading"
+        class="cancel-button">
+        Cancel
+      </button>
+      
+      <button 
+        type="submit" 
+        mat-raised-button 
+        color="primary"
+        [disabled]="createForm.invalid || isLoading"
+        class="create-button">
+        <mat-spinner *ngIf="isLoading" diameter="20" class="button-spinner"></mat-spinner>
+        <mat-icon *ngIf="!isLoading">add</mat-icon>
+        <span>{{ isLoading ? 'Creating...' : 'Create Organization' }}</span>
+      </button>
+    </div>
+  </form>
+</div>

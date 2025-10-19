@@ -98,16 +98,12 @@ export class CampaignService {
   }
 
   /**
-   * Get all campaigns for the organization
+   * Get all campaigns for the organization (no pagination)
    */
-  getCampaigns(page: number = 1, limit: number = 10): Observable<CampaignList> {
+  getCampaigns(): Observable<CampaignList> {
     const organizationId = this.getOrganizationId();
-    const params = {
-      page: page.toString(),
-      limit: limit.toString()
-    };
     
-    return this.http.get<CampaignList>(`${this.API_URL}/organizations/${organizationId}/campaigns`, { params })
+    return this.http.get<CampaignList>(`${this.API_URL}/organizations/${organizationId}/campaigns`)
       .pipe(
         catchError(error => {
           console.error('Error fetching campaigns:', error);

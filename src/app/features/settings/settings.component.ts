@@ -7,12 +7,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
 import { OrganizationService } from '../../core/services/organization.service';
+import { ConfirmationDialogComponent, ConfirmationDialogData } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 export interface SettingsCategory {
   id: string;
@@ -57,7 +59,8 @@ export interface UserProfile {
     MatInputModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss']
@@ -84,6 +87,19 @@ export class SettingsComponent implements OnInit {
 
   newPassword: string = '';
   deleteConfirmationEmail: string = '';
+  
+  // Organization editing
+  isEditingOrgName = false;
+  isSavingOrgName = false;
+  originalOrgName = '';
+  
+  // Organization deletion
+  deleteConfirmationName = '';
+  isDeletingOrganization = false;
+  
+  // Account deletion
+  isDeletingAccount = false;
+  accountDataSummary: any = null;
 
   settingsCategories: SettingsCategory[] = [
     // ORG SETTINGS
@@ -98,13 +114,16 @@ export class SettingsComponent implements OnInit {
     private authService: AuthService,
     private organizationService: OrganizationService,
     private snackBar: MatSnackBar,
-    private route: ActivatedRoute
+    private dialog: MatDialog,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
     this.loadOrganizationSettings();
     this.loadMembers();
     this.loadUserProfile();
+    this.loadAccountDataSummary();
     
     // Check for query parameters to set initial category
     this.route.queryParams.subscribe(params => {
@@ -176,15 +195,183 @@ export class SettingsComponent implements OnInit {
 
 
   /**
+   * Toggle organization name editing
+   */
+  toggleOrgNameEdit(): void {
+    this.isEditingOrgName = true;
+    this.originalOrgName = this.organizationSettings.organizationName;
+  }
+
+  /**
+   * Cancel organization name editing
+   */
+  cancelOrgNameEdit(): void {
+    this.isEditingOrgName = false;
+    this.organizationSettings.organizationName = this.originalOrgName;
+  }
+
+  /**
+   * Save organization name
+   */
+  saveOrgName(): void {
+    if (!this.organizationSettings.organizationName.trim()) {
+      this.snackBar.open('Organization name cannot be empty', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    this.isSavingOrgName = true;
+    const user = this.authService.getCurrentUser();
+    
+    if (!user?.organization_id) {
+      this.snackBar.open('Organization ID not found', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      this.isSavingOrgName = false;
+      return;
+    }
+
+    this.organizationService.updateOrganization(user.organization_id, {
+      name: this.organizationSettings.organizationName.trim()
+    }).subscribe({
+      next: (response) => {
+        this.isSavingOrgName = false;
+        this.isEditingOrgName = false;
+        this.originalOrgName = this.organizationSettings.organizationName;
+        
+        // Update user info with new organization name
+        this.authService.updateUserInfo({
+          ...user,
+          organization_name: this.organizationSettings.organizationName
+        });
+        
+        this.snackBar.open('Organization name updated successfully', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+      },
+      error: (error) => {
+        this.isSavingOrgName = false;
+        console.error('Error updating organization name:', error);
+        
+        let errorMessage = 'Failed to update organization name. Please try again.';
+        if (error.error?.detail) {
+          errorMessage = error.error.detail;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+        
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+      }
+    });
+  }
+
+  /**
+   * Check if organization can be deleted
+   */
+  canDeleteOrganization(): boolean {
+    return this.deleteConfirmationName.trim() === this.getOrganizationDisplayName();
+  }
+
+  /**
    * Delete organization
    */
   deleteOrganization(): void {
-    // TODO: Implement organization deletion
-    console.log('Delete organization');
-    this.snackBar.open('Organization deletion not implemented yet', 'Close', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top'
+    if (!this.canDeleteOrganization()) {
+      this.snackBar.open('Please enter the correct organization name to confirm deletion', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      return;
+    }
+
+    // Show confirmation dialog
+    const dialogData: ConfirmationDialogData = {
+      title: 'Delete Organization',
+      message: `Are you sure you want to delete the organization "${this.getOrganizationDisplayName()}"?\n\nThis action cannot be undone and will permanently delete all organization data.`,
+      confirmText: 'Delete Organization',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      showDataSummary: false
+    };
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      disableClose: true,
+      data: dialogData
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.performOrganizationDeletion();
+      }
+    });
+  }
+
+  /**
+   * Perform the actual organization deletion
+   */
+  private performOrganizationDeletion(): void {
+    this.isDeletingOrganization = true;
+    const user = this.authService.getCurrentUser();
+    
+    if (!user?.organization_id) {
+      this.snackBar.open('Organization ID not found', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top'
+      });
+      this.isDeletingOrganization = false;
+      return;
+    }
+
+    this.organizationService.deleteOrganization(user.organization_id).subscribe({
+      next: (response) => {
+        this.isDeletingOrganization = false;
+        this.snackBar.open('Organization deleted successfully. Redirecting to dashboard...', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+        
+        // Redirect to dashboard/overview page
+        setTimeout(() => {
+          this.router.navigate(['/dashboard']);
+        }, 2000);
+      },
+      error: (error) => {
+        this.isDeletingOrganization = false;
+        console.error('Error deleting organization:', error);
+        
+        let errorMessage = 'Failed to delete organization. Please try again.';
+        if (error.error?.detail) {
+          errorMessage = error.error.detail;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        } else if (error.status === 403) {
+          errorMessage = 'You do not have permission to delete this organization.';
+        } else if (error.status === 400) {
+          errorMessage = 'Cannot delete organization. It may be your default organization or have active members.';
+        }
+        
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+      }
     });
   }
 
@@ -375,7 +562,21 @@ export class SettingsComponent implements OnInit {
   }
 
   /**
-   * Delete account
+   * Load account data summary for deletion confirmation
+   */
+  loadAccountDataSummary(): void {
+    this.authService.getAccountDataSummary().subscribe({
+      next: (data) => {
+        this.accountDataSummary = data;
+      },
+      error: (error) => {
+        console.error('Error loading account data summary:', error);
+      }
+    });
+  }
+
+  /**
+   * Delete user account
    */
   deleteAccount(): void {
     if (this.deleteConfirmationEmail !== this.userProfile.email) {
@@ -387,12 +588,69 @@ export class SettingsComponent implements OnInit {
       return;
     }
 
-    // TODO: Implement account deletion functionality
-    console.log('Delete account confirmed');
-    this.snackBar.open('Account deletion not implemented yet', 'Close', {
-      duration: 3000,
-      horizontalPosition: 'right',
-      verticalPosition: 'top'
+    // Show confirmation dialog
+    const dialogData: ConfirmationDialogData = {
+      title: 'Delete Account',
+      message: `Are you absolutely sure you want to delete your account "${this.userProfile.email}"?\n\nThis action cannot be undone.`,
+      confirmText: 'Delete Account',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      showDataSummary: true,
+      dataSummary: this.accountDataSummary
+    };
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      width: '500px',
+      maxWidth: '90vw',
+      disableClose: true,
+      data: dialogData
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.performAccountDeletion();
+      }
+    });
+  }
+
+  /**
+   * Perform the actual account deletion
+   */
+  private performAccountDeletion(): void {
+    this.isDeletingAccount = true;
+
+    this.authService.deleteAccount().subscribe({
+      next: (response) => {
+        this.isDeletingAccount = false;
+        this.snackBar.open('Account deleted successfully. Redirecting to login...', 'Close', {
+          duration: 3000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+        
+        // Clear user session and redirect to login page
+        this.authService.logout();
+        setTimeout(() => {
+          this.router.navigate(['/auth/login']);
+        }, 2000);
+      },
+      error: (error) => {
+        this.isDeletingAccount = false;
+        console.error('Error deleting account:', error);
+        
+        let errorMessage = 'Failed to delete account. Please try again.';
+        if (error.error?.detail) {
+          errorMessage = error.error.detail;
+        } else if (error.error?.message) {
+          errorMessage = error.error.message;
+        }
+        
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top'
+        });
+      }
     });
   }
 }
